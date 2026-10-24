@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bioscan_language_title">应用语言</string>
+    <string name="bioscan_language_follow_system">跟随系统</string>
+    <string name="bioscan_language_available">可选语言</string>
+    <string name="bioscan_language_information">离线图鉴的语言在各自图鉴中单独管理。</string>
+    <string name="bioscan_language_changed_title">语言已更改</string>
+    <string name="bioscan_language_changed_message">重启应用后新语言才会生效。</string>
+    <string name="bioscan_language_restart_now">立即重启</string>
+    <string name="bioscan_language_restart_later">稍后</string>
+    <string name="bioscan_settings_title">设置</string>
+    <string name="bioscan_settings_back">返回</string>
+    <string name="bioscan_settings_general">通用</string>
+    <string name="bioscan_settings_appearance">外观</string>
+    <string name="bioscan_settings_support">支持</string>
+    <string name="bioscan_settings_system_settings">系统设置</string>
+    <string name="bioscan_settings_system_settings_subtitle">管理权限与应用设置</string>
+    <string name="bioscan_settings_privacy">隐私政策</string>
+    <string name="bioscan_settings_privacy_subtitle">我们如何收集和使用数据</string>
+    <string name="bioscan_settings_terms">使用条款</string>
+    <string name="bioscan_settings_terms_subtitle">使用条款与责任</string>
+    <string name="bioscan_settings_feedback">发送反馈</string>
+    <string name="bioscan_settings_feedback_subtitle">帮助我们改进应用</string>
+    <string name="bioscan_settings_language_pack">图鉴语言包</string>
+    <string name="bioscan_settings_language_pack_subtitle">下载并切换离线物种语言</string>
+    <string name="bioscan_settings_restore">恢复购买</string>
+    <string name="bioscan_settings_restore_subtitle">恢复之前的购买</string>
+    <string name="bioscan_settings_restoring">正在检查商店…</string>
+    <string name="bioscan_settings_rate">给应用评分</string>
+    <string name="bioscan_settings_rate_subtitle">在 Google Play 留下评分</string>
+    <string name="bioscan_settings_restore_success_title">购买已恢复</string>
+    <string name="bioscan_settings_restore_success_message">你的购买已在当前设备生效。</string>
+    <string name="bioscan_settings_restore_not_found_title">没有可恢复的购买</string>
+    <string name="bioscan_settings_restore_not_found_message">该商店账号下未找到符合条件的购买。</string>
+    <string name="bioscan_settings_restore_error_title">恢复失败</string>
+    <string name="bioscan_settings_restore_error_message">暂时无法恢复购买，请重试。</string>
+    <string name="bioscan_settings_ok">好</string>
+    <string name="bioscan_settings_developer_unlocked">已解锁开发者选项</string>
+</resources>

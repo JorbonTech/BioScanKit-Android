@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bioscan_language_title">App Language</string>
+    <string name="bioscan_language_follow_system">Follow System</string>
+    <string name="bioscan_language_available">AVAILABLE LANGUAGES</string>
+    <string name="bioscan_language_information">Offline encyclopedia languages are managed separately.</string>
+    <string name="bioscan_language_changed_title">Language changed</string>
+    <string name="bioscan_language_changed_message">Restart the app to apply the selected language.</string>
+    <string name="bioscan_language_restart_now">Restart now</string>
+    <string name="bioscan_language_restart_later">Later</string>
+    <string name="bioscan_settings_title">Settings</string>
+    <string name="bioscan_settings_back">Back</string>
+    <string name="bioscan_settings_general">General</string>
+    <string name="bioscan_settings_appearance">Appearance</string>
+    <string name="bioscan_settings_support">Support</string>
+    <string name="bioscan_settings_system_settings">System Settings</string>
+    <string name="bioscan_settings_system_settings_subtitle">Manage permissions and app settings</string>
+    <string name="bioscan_settings_privacy">Privacy Policy</string>
+    <string name="bioscan_settings_privacy_subtitle">How we collect and use data</string>
+    <string name="bioscan_settings_terms">Terms of Use</string>
+    <string name="bioscan_settings_terms_subtitle">Terms of use and responsibilities</string>
+    <string name="bioscan_settings_feedback">Send Feedback</string>
+    <string name="bioscan_settings_feedback_subtitle">Help us improve the app</string>
+    <string name="bioscan_settings_language_pack">Encyclopedia languages</string>
+    <string name="bioscan_settings_language_pack_subtitle">Download and switch offline species languages</string>
+    <string name="bioscan_settings_restore">Restore purchase</string>
+    <string name="bioscan_settings_restore_subtitle">Restore a previous purchase</string>
+    <string name="bioscan_settings_restoring">Checking the store…</string>
+    <string name="bioscan_settings_rate">Rate App</string>
+    <string name="bioscan_settings_rate_subtitle">Leave a rating on Google Play</string>
+    <string name="bioscan_settings_restore_success_title">Purchase restored</string>
+    <string name="bioscan_settings_restore_success_message">Your purchase is active on this device.</string>
+    <string name="bioscan_settings_restore_not_found_title">Nothing to restore</string>
+    <string name="bioscan_settings_restore_not_found_message">No eligible purchase was found for this store account.</string>
+    <string name="bioscan_settings_restore_error_title">Restore failed</string>
+    <string name="bioscan_settings_restore_error_message">Unable to restore purchases right now. Please try again.</string>
+    <string name="bioscan_settings_ok">OK</string>
+    <string name="bioscan_settings_developer_unlocked">Developer options unlocked</string>
+</resources>
