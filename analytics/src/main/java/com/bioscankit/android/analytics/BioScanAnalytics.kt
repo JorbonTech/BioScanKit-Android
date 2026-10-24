@@ -70,6 +70,14 @@ object BioScanAnalytics {
             }
         }
 
+        // 与 iOS setBeforeSend 对齐：受保护属性在发送前强制写入，
+        // 不允许业务参数覆盖 app_id / platform / app_version 等。
+        postHogConfig.addBeforeSend { event ->
+            val properties = event.properties ?: mutableMapOf()
+            properties.putAll(protectedProperties)
+            event.copy(properties = properties)
+        }
+
         PostHogAndroid.setup(appContext, postHogConfig)
         configured.set(true)
         if (!trackingEnabled.get()) PostHog.optOut()
@@ -245,10 +253,22 @@ object BioScanAnalytics {
             "package_name" to context.packageName,
             "app_version" to versionName,
             "build_number" to versionCode,
-            "environment" to if (disabled) "debug" else configuration.environment,
+            "environment" to resolveEnvironment(configuration),
             "device_locale" to Locale.getDefault().toLanguageTag(),
             "platform" to "android",
         )
+    }
+
+    /**
+     * 与 iOS 的 environment 取值集合对齐（debug / testflight / app_store / simulator / test）。
+     *
+     * 注意：不能像先前实现那样用 `disabled` 判断 —— `disabled` 同时包含模拟器与
+     * `configuration.debug`，会把 release 包也标成 debug，导致数据失真。
+     */
+    private fun resolveEnvironment(configuration: AnalyticsConfiguration): String = when {
+        configuration.debug -> "debug"
+        isEmulator() -> "simulator"
+        else -> configuration.environment
     }
 
     private fun isEmulator(): Boolean =
