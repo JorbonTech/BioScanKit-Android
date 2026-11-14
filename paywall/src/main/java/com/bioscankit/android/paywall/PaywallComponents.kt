@@ -3,6 +3,7 @@ package com.bioscankit.android.paywall
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,9 +22,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bioscankit.android.design.BioScanDesign
@@ -36,14 +41,21 @@ fun PaywallTopBar(
     onRestore: () -> Unit,
     modifier: Modifier = Modifier,
     closeIcon: @Composable () -> Unit,
+    /** 顶部渐变背景上需要白色文字；为 null 时用主题强调色。 */
+    restoreTint: Color? = null,
 ) {
     val colors = BioScanDesign.colors
     Row(
         modifier = modifier.fillMaxWidth().padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // 与 iOS `CardSelectionPaywallView.header` 对齐：32dp 圆形底（cardBackground 86%）+ 图标
         Box(
-            modifier = Modifier.size(34.dp).clickable(onClick = onDismiss),
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(colors.cardBackground.copy(alpha = 0.86f))
+                .clickable(onClick = onDismiss),
             contentAlignment = Alignment.Center,
         ) {
             closeIcon()
@@ -51,7 +63,7 @@ fun PaywallTopBar(
         Spacer(Modifier.weight(1f))
         Text(
             text = restoreTitle,
-            color = colors.accent,
+            color = restoreTint ?: colors.accent,
             fontSize = 14.sp,
             lineHeight = 14.sp,
             fontWeight = FontWeight.Black,
@@ -62,14 +74,39 @@ fun PaywallTopBar(
     }
 }
 
+/** 右上角圆形关闭按钮，对应 iOS `CardSelectionPaywallView.header`。 */
+@Composable
+fun PaywallCloseButton(
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    closeIcon: @Composable () -> Unit,
+) {
+    val colors = BioScanDesign.colors
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.End,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(colors.cardBackground.copy(alpha = 0.86f))
+                .clickable(onClick = onDismiss),
+            contentAlignment = Alignment.Center,
+        ) {
+            closeIcon()
+        }
+    }
+}
+
 @Composable
 fun PaywallStoreStatusBanner(
     isLoading: Boolean,
     message: String?,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
-    connectingMessage: String = "Connecting to Google Play...",
-    retryTitle: String = "Retry",
+    connectingMessage: String? = null,
+    retryTitle: String? = null,
     statusIcon: @Composable () -> Unit,
 ) {
     if (message.isNullOrBlank() && !isLoading) return
@@ -93,7 +130,11 @@ fun PaywallStoreStatusBanner(
         }
         Spacer(Modifier.width(10.dp))
         Text(
-            text = if (isLoading) connectingMessage else message.orEmpty(),
+            text = if (isLoading) {
+                connectingMessage ?: stringResource(R.string.bioscan_paywall_connecting)
+            } else {
+                message.orEmpty()
+            },
             color = colors.primaryText,
             style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
             modifier = Modifier.weight(1f),
@@ -101,7 +142,7 @@ fun PaywallStoreStatusBanner(
         if (!isLoading) {
             Spacer(Modifier.width(10.dp))
             Text(
-                text = retryTitle,
+                text = retryTitle ?: stringResource(R.string.bioscan_paywall_retry),
                 color = colors.accent,
                 style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
                 modifier = Modifier.clickable(onClick = onRetry).padding(vertical = 6.dp),
@@ -114,6 +155,8 @@ fun PaywallStoreStatusBanner(
 fun PaywallHero(
     copy: PaywallCopy,
     modifier: Modifier = Modifier,
+    /** 覆盖第三行强调色；为 null 时用主题 success 色。 */
+    footnoteColor: Color? = null,
 ) {
     val colors = BioScanDesign.colors
     androidx.compose.foundation.layout.Column(
@@ -140,7 +183,7 @@ fun PaywallHero(
         )
         Text(
             text = copy.heroFootnote,
-            color = colors.success,
+            color = footnoteColor ?: colors.success,
             fontSize = 18.sp,
             lineHeight = 22.sp,
             fontWeight = FontWeight.Black,
@@ -159,77 +202,162 @@ fun PaywallProductOptionCard(
     modifier: Modifier = Modifier,
     badge: String? = null,
     originalPriceText: String? = null,
+    /** 终身卡：深色渐变 + 白字（iOS lifetime 卡片）。 */
     highlighted: Boolean = false,
+    /** 单价，例如 “US$0.20/scan”；为 null 时回退到 [priceCaption]。 */
+    unitPriceText: String? = null,
+    /** 价格下方的补充文案，例如 “一次性购买”。 */
+    footerText: String? = null,
     onSelect: () -> Unit,
 ) {
     val colors = BioScanDesign.colors
+    val isLifetime = highlighted
     val shape = RoundedCornerShape(20.dp)
-    val background = if (highlighted) colors.accent.copy(alpha = 0.20f) else colors.cardBackground
-    val border = if (selected) colors.accent else colors.border
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(background, shape)
-            .border(if (selected) 2.dp else 1.dp, border, shape)
-            .clickable(enabled = enabled, onClick = onSelect)
-            .padding(horizontal = 16.dp, vertical = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Box(
-            modifier = Modifier.size(22.dp).border(2.dp, colors.accent, CircleShape),
-            contentAlignment = Alignment.Center,
+
+    val background = when {
+        isLifetime -> Brush.linearGradient(
+            listOf(
+                lerp(colors.accent, Color.Black, 0.45f),
+                lerp(colors.accent, Color.Black, 0.58f),
+            )
+        )
+        selected -> Brush.linearGradient(
+            listOf(
+                lerp(colors.cardBackground, colors.accent, 0.16f),
+                colors.cardBackground,
+            )
+        )
+        else -> Brush.linearGradient(listOf(colors.cardBackground, colors.cardBackground))
+    }
+
+    val titleColor = if (isLifetime) Color.White else colors.primaryText
+    val subtitleColor = if (isLifetime) Color.White.copy(alpha = 0.78f) else colors.secondaryText
+    val tertiaryColor = if (isLifetime) Color.White.copy(alpha = 0.88f) else colors.accent
+    val highlight = lerp(colors.accent, Color.White, 0.45f)
+    val ringColor = when {
+        isLifetime && selected -> highlight
+        isLifetime -> Color.White.copy(alpha = 0.45f)
+        selected -> colors.accent
+        else -> colors.border
+    }
+    val borderColor = when {
+        isLifetime && selected -> highlight
+        isLifetime -> Color.White.copy(alpha = 0.16f)
+        selected -> colors.accent
+        else -> colors.border
+    }
+    val caption = unitPriceText ?: priceCaption.takeIf { !isLifetime && it.isNotBlank() }
+
+    Box(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(background, shape)
+                .border(if (selected) 2.dp else 1.dp, borderColor, shape)
+                .clickable(enabled = enabled, onClick = onSelect)
+                .padding(
+                    horizontal = 16.dp,
+                    vertical = if (isLifetime) 17.dp else 15.dp,
+                ),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.Top,
         ) {
-            if (selected) Box(Modifier.size(10.dp).background(colors.accent, CircleShape))
-        }
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .padding(top = 2.dp)
+                    .size(22.dp)
+                    .border(2.dp, ringColor, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (selected) {
+                    Box(Modifier.size(10.dp).background(ringColor, CircleShape))
+                }
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 Text(
                     text = title,
-                    color = colors.primaryText,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Black),
+                    color = titleColor,
+                    fontSize = if (isLifetime) 20.sp else 17.sp,
+                    fontWeight = FontWeight.Black,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
-                badge?.let {
-                    Spacer(Modifier.width(8.dp))
+                Text(
+                    text = subtitle,
+                    color = subtitleColor,
+                    fontSize = if (isLifetime) 14.sp else 13.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.padding(
+                    top = if (isLifetime) {
+                        if (badge != null) 26.dp else 12.dp
+                    } else {
+                        0.dp
+                    },
+                ),
+            ) {
+                originalPriceText?.let {
                     Text(
                         text = it,
-                        color = colors.accent,
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black),
-                        modifier = Modifier
-                            .background(colors.accent.copy(alpha = 0.14f), CircleShape)
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        color = subtitleColor,
+                        fontSize = if (isLifetime) 14.sp else 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        textDecoration = TextDecoration.LineThrough,
+                    )
+                }
+                Text(
+                    text = formattedPrice,
+                    color = titleColor,
+                    fontSize = if (isLifetime) 26.sp else 22.sp,
+                    fontWeight = FontWeight.Black,
+                    maxLines = 1,
+                )
+                if (!caption.isNullOrBlank()) {
+                    Text(
+                        text = caption,
+                        color = tertiaryColor,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+                footerText?.takeIf { it.isNotBlank() }?.let {
+                    Text(
+                        text = it,
+                        color = tertiaryColor,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
                     )
                 }
             }
-            Text(
-                text = subtitle,
-                color = colors.secondaryText,
-                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-            )
         }
-        Column(horizontalAlignment = Alignment.End) {
-            originalPriceText?.let {
-                Text(
-                    text = it,
-                    color = colors.secondaryText,
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        textDecoration = TextDecoration.LineThrough,
-                    ),
-                )
-            }
+
+        badge?.takeIf { it.isNotBlank() }?.let {
             Text(
-                text = formattedPrice,
-                color = colors.primaryText,
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black),
-            )
-            Text(
-                text = priceCaption,
-                color = colors.accent,
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                text = it.uppercase(),
+                color = if (isLifetime) Color.White else colors.accent,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 10.dp, end = 12.dp)
+                    .background(
+                        if (isLifetime) {
+                            Color.White.copy(alpha = 0.18f)
+                        } else {
+                            colors.accent.copy(alpha = 0.14f)
+                        },
+                        CircleShape,
+                    )
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
             )
         }
     }
@@ -248,8 +376,19 @@ fun PaywallPrimaryButton(
             .fillMaxWidth()
             .height(54.dp)
             .background(
-                if (enabled) colors.accent else colors.secondaryText.copy(alpha = 0.35f),
-                RoundedCornerShape(BioScanDesign.theme.buttonCornerRadius),
+                if (enabled) {
+                    Brush.linearGradient(
+                        listOf(colors.accent, lerp(colors.accent, Color.White, 0.22f))
+                    )
+                } else {
+                    Brush.linearGradient(
+                        listOf(
+                            colors.secondaryText.copy(alpha = 0.35f),
+                            colors.secondaryText.copy(alpha = 0.35f),
+                        )
+                    )
+                },
+                RoundedCornerShape(18.dp),
             )
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,

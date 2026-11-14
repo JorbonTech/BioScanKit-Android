@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bioscan_capture_title">Identify</string>
+    <string name="bioscan_capture_instruction">Align your subject clearly in the frame</string>
+    <string name="bioscan_capture_align_clearly">Align the subject clearly</string>
+    <string name="bioscan_capture_keep_subject_clear">Keep the subject clear and centered.</string>
+    <string name="bioscan_capture_analyzing_field">Analyzing field species...</string>
+    <string name="bioscan_capture_permission_title">Camera Access</string>
+    <string name="bioscan_capture_permission_message">Allow camera access to photograph and identify your subject.</string>
+    <string name="bioscan_capture_permission_denied">Camera access is disabled. Enable it in Settings.</string>
+    <string name="bioscan_capture_permission_denied_enable">Camera access is disabled. Enable it in Settings.</string>
+    <string name="bioscan_capture_status_on_device">On-device recognition</string>
+    <string name="bioscan_capture_processing_title">Analyzing</string>
+    <string name="bioscan_capture_processing_subtitle">Comparing visual features on this device…</string>
+    <string name="bioscan_capture_processing_instruction">Analyzing field species...</string>
+    <string name="bioscan_capture_processing_eyebrow">AI SCAN</string>
+    <string name="bioscan_capture_processing_preparing">Preparing scan...</string>
+    <string name="bioscan_capture_processing_detecting">Detecting...</string>
+    <string name="bioscan_capture_processing_extracting">Extracting Features...</string>
+    <string name="bioscan_capture_processing_comparing">Comparing Species...</string>
+    <string name="bioscan_capture_processing_waiting">Waiting for result...</string>
+    <string name="bioscan_capture_processing_finishing">Processing</string>
+    <string name="bioscan_capture_recognition_failed">Recognition Failed</string>
+    <string name="bioscan_capture_try_again">Try Again</string>
+    <string name="bioscan_capture_back_to_camera">Back to Camera</string>
+    <string name="bioscan_capture_cancel">Cancel</string>
+    <string name="bioscan_capture_continue">Continue</string>
+    <string name="bioscan_capture_ok">OK</string>
+    <string name="bioscan_capture_open_settings">Open Settings</string>
+    <string name="bioscan_capture_camera_error">Camera Error</string>
+    <string name="bioscan_capture_camera_unavailable">The back camera is unavailable.</string>
+    <string name="bioscan_capture_camera_config_failed">The camera could not be configured.</string>
+    <string name="bioscan_capture_photo_process_failed">The captured photo could not be processed.</string>
+    <string name="bioscan_capture_close_camera">Close camera</string>
+    <string name="bioscan_capture_close_crop_editor">Close crop editor</string>
+    <string name="bioscan_capture_show_camera_tips">Show camera tips</string>
+    <string name="bioscan_capture_choose_photo">Choose a photo</string>
+    <string name="bioscan_capture_choose_from_photos">Choose from Photos</string>
+    <string name="bioscan_capture_take_photo">Take photo</string>
+    <string name="bioscan_capture_flash_off">Turn flash off</string>
+    <string name="bioscan_capture_flash_on">Turn flash on</string>
+    <string name="bioscan_capture_crop_reset">Reset</string>
+    <string name="bioscan_capture_crop_use">Use Crop</string>
+    <string name="bioscan_capture_crop_preview">Crop preview</string>
+    <string name="bioscan_capture_zoom_times">Zoom %1$s times</string>
+    <string name="bioscan_capture_photo_being_analyzed">Photo being analyzed</string>
+</resources>

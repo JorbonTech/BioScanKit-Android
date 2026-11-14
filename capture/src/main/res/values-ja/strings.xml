@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bioscan_capture_title">識別</string>
+    <string name="bioscan_capture_instruction">被写体をフレーム内にはっきり合わせてください</string>
+    <string name="bioscan_capture_align_clearly">被写体をはっきり合わせる</string>
+    <string name="bioscan_capture_keep_subject_clear">被写体を鮮明に中央へ合わせてください。</string>
+    <string name="bioscan_capture_analyzing_field">野外の種を解析中…</string>
+    <string name="bioscan_capture_permission_title">カメラアクセス</string>
+    <string name="bioscan_capture_permission_message">被写体を撮影して識別するため、カメラへのアクセスを許可してください。</string>
+    <string name="bioscan_capture_permission_denied">カメラへのアクセスが無効です。設定で有効にしてください。</string>
+    <string name="bioscan_capture_permission_denied_enable">カメラへのアクセスが無効です。設定で有効にしてください。</string>
+    <string name="bioscan_capture_status_on_device">デバイス上で識別</string>
+    <string name="bioscan_capture_processing_title">解析中</string>
+    <string name="bioscan_capture_processing_subtitle">このデバイス上で視覚的特徴を比較中…</string>
+    <string name="bioscan_capture_processing_instruction">野外の種を解析中…</string>
+    <string name="bioscan_capture_processing_eyebrow">AI スキャン</string>
+    <string name="bioscan_capture_processing_preparing">スキャンを準備中…</string>
+    <string name="bioscan_capture_processing_detecting">検出中…</string>
+    <string name="bioscan_capture_processing_extracting">特徴を抽出中…</string>
+    <string name="bioscan_capture_processing_comparing">種を比較中…</string>
+    <string name="bioscan_capture_processing_waiting">結果を待っています…</string>
+    <string name="bioscan_capture_processing_finishing">処理中</string>
+    <string name="bioscan_capture_recognition_failed">識別に失敗しました</string>
+    <string name="bioscan_capture_try_again">もう一度試す</string>
+    <string name="bioscan_capture_back_to_camera">カメラに戻る</string>
+    <string name="bioscan_capture_cancel">キャンセル</string>
+    <string name="bioscan_capture_continue">続ける</string>
+    <string name="bioscan_capture_ok">OK</string>
+    <string name="bioscan_capture_open_settings">設定を開く</string>
+    <string name="bioscan_capture_camera_error">カメラエラー</string>
+    <string name="bioscan_capture_camera_unavailable">背面カメラを利用できません。</string>
+    <string name="bioscan_capture_camera_config_failed">カメラを設定できませんでした。</string>
+    <string name="bioscan_capture_photo_process_failed">撮影した写真を処理できませんでした。</string>
+    <string name="bioscan_capture_close_camera">カメラを閉じる</string>
+    <string name="bioscan_capture_close_crop_editor">切り抜き編集を閉じる</string>
+    <string name="bioscan_capture_show_camera_tips">カメラのヒントを表示</string>
+    <string name="bioscan_capture_choose_photo">写真を選択</string>
+    <string name="bioscan_capture_choose_from_photos">写真から選択</string>
+    <string name="bioscan_capture_take_photo">写真を撮る</string>
+    <string name="bioscan_capture_flash_off">フラッシュをオフ</string>
+    <string name="bioscan_capture_flash_on">フラッシュをオン</string>
+    <string name="bioscan_capture_crop_reset">リセット</string>
+    <string name="bioscan_capture_crop_use">切り抜きを使用</string>
+    <string name="bioscan_capture_crop_preview">切り抜きプレビュー</string>
+    <string name="bioscan_capture_zoom_times">%1$s倍ズーム</string>
+    <string name="bioscan_capture_photo_being_analyzed">Photo being analyzed</string>
+</resources>

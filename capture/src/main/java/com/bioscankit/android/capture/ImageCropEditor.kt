@@ -1,6 +1,12 @@
 package com.bioscankit.android.capture
 
 import android.graphics.Bitmap
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -28,6 +34,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -36,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -49,10 +57,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription as semanticsContentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.bioscankit.android.design.resolve
 import kotlin.math.max
@@ -73,26 +85,34 @@ fun ImageCropEditor(
 ) {
     val density = LocalDensity.current
     val colors = configuration.theme.resolve(androidx.compose.foundation.isSystemInDarkTheme())
+    val resolvedGuidanceText = configuration.guidanceText ?: stringResource(R.string.bioscan_capture_instruction)
+    val resolvedConfirmTitle = configuration.confirmTitle ?: stringResource(R.string.bioscan_capture_crop_use)
+    val closeCropDescription = stringResource(R.string.bioscan_capture_close_crop_editor)
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
     var zoom by remember(bitmap) { mutableFloatStateOf(1f) }
     var minimumZoom by remember(bitmap) { mutableFloatStateOf(1f) }
     var translation by remember(bitmap) { mutableStateOf(Offset.Zero) }
 
-    fun cropRect(): Rect {
-        val availableWidth = (canvasSize.width - with(density) { 40.dp.toPx() }).coerceAtLeast(1f)
-        val side = min(availableWidth * configuration.cropScale, canvasSize.height * configuration.cropScale)
-        return Rect(
-            (canvasSize.width - side) / 2f,
-            (canvasSize.height - side) / 2f,
-            (canvasSize.width + side) / 2f,
-            (canvasSize.height + side) / 2f,
-        )
-    }
-
-    fun baseScale(): Float = min(
-        canvasSize.width / bitmap.width.toFloat(),
-        canvasSize.height / bitmap.height.toFloat(),
+    /**
+     * 复用共享几何，让 [CropEditorConfiguration.aspectRatio] 与
+     * [CropEditorConfiguration.cropMaximumSize] 真正生效（与 iOS `CropGeometry.layout` 同源）。
+     */
+    fun layout(): CropLayout = CropGeometry.layout(
+        imageSize = Size(bitmap.width.toFloat(), bitmap.height.toFloat()),
+        canvasFrame = Rect(
+            with(density) { 20.dp.toPx() },
+            with(density) { 20.dp.toPx() },
+            canvasSize.width - with(density) { 20.dp.toPx() },
+            canvasSize.height - with(density) { 20.dp.toPx() },
+        ),
+        cropScale = configuration.cropScale,
+        cropMaximumSize = configuration.cropMaximumSize?.let { with(density) { it.toPx() } },
+        aspectRatio = configuration.aspectRatio,
     )
+
+    fun cropRect(): Rect = layout().cropRect
+
+    fun baseScale(): Float = layout().baseScale
 
     fun imageRect(targetZoom: Float = zoom, targetTranslation: Offset = translation): Rect {
         val scale = baseScale() * targetZoom
@@ -139,6 +159,22 @@ fun ImageCropEditor(
         }
     }
 
+    // 对应 iOS `.statusBarHidden(configuration.hidesStatusBar)`。
+    val activity = LocalContext.current as? android.app.Activity
+    DisposableEffect(activity, configuration.hidesStatusBar) {
+        val controller = activity?.window?.let {
+            androidx.core.view.WindowCompat.getInsetsController(it, it.decorView)
+        }
+        if (configuration.hidesStatusBar) {
+            controller?.hide(androidx.core.view.WindowInsetsCompat.Type.statusBars())
+        }
+        onDispose {
+            if (configuration.hidesStatusBar) {
+                controller?.show(androidx.core.view.WindowInsetsCompat.Type.statusBars())
+            }
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -171,19 +207,56 @@ fun ImageCropEditor(
                     },
                 contentScale = ContentScale.FillBounds,
             )
-            CropMask(cropRect(), colors.accent, configuration.showsGrid)
+            // 与 iOS 一致：iNatureLegacy 用 legacyAccent，其余用主题强调色。
+            val isDarkTheme = androidx.compose.foundation.isSystemInDarkTheme()
+            val baseAccent = if (configuration.layoutStyle == CropEditorLayoutStyle.INatureLegacy) {
+                configuration.legacyAccent.resolve(isDarkTheme)
+            } else {
+                colors.accent
+            }
+            // 对应 iOS `animationStyle == .pulse`：描边透明度 0.72 ↔ 1.0 呼吸。
+            val pulseAlpha = if (configuration.animationStyle == CropBorderAnimationStyle.Pulse) {
+                val transition = rememberInfiniteTransition(label = "crop-border-pulse")
+                transition.animateFloat(
+                    initialValue = 0.72f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 1100, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse,
+                    ),
+                    label = "crop-border-pulse-alpha",
+                ).value
+            } else {
+                1f
+            }
+            CropMask(
+                cropRect = cropRect(),
+                accent = baseAccent.copy(alpha = pulseAlpha),
+                showsGrid = configuration.showsGrid,
+                cornerRadius = configuration.cornerRadius,
+            )
         }
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.statusBars)
+                .then(
+                    if (configuration.hidesStatusBar) {
+                        Modifier
+                    } else {
+                        Modifier.windowInsetsPadding(WindowInsets.statusBars)
+                    }
+                )
                 .padding(top = 12.dp),
         ) {
             Surface(
                 onClick = onCancel,
                 enabled = enabled,
-                modifier = Modifier.padding(horizontal = 20.dp),
+                modifier = Modifier
+                    .padding(horizontal = 20.dp)
+                    .semantics {
+                        semanticsContentDescription = closeCropDescription
+                    },
                 shape = CircleShape,
                 color = Color.Black.copy(alpha = 0.42f),
                 contentColor = Color.White,
@@ -199,7 +272,7 @@ fun ImageCropEditor(
                 color = Color.Black.copy(alpha = 0.48f),
             ) {
                 Text(
-                    text = "⌖  ${configuration.guidanceText}",
+                    text = "⌖  $resolvedGuidanceText",
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                     color = Color.White,
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
@@ -216,21 +289,25 @@ fun ImageCropEditor(
                 .padding(horizontal = 20.dp, vertical = 18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Box(
-                modifier = Modifier.align(Alignment.End).size(56.dp)
-                    .background(Color.Black.copy(alpha = 0.22f), RoundedCornerShape(10.dp))
-                    .border(1.dp, Color.White.copy(alpha = 0.20f), RoundedCornerShape(10.dp)),
-            ) {
-                preview?.let {
-                    Image(it.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            if (configuration.showsPreview) {
+                Box(
+                    modifier = Modifier.align(Alignment.End).size(56.dp)
+                        .background(Color.Black.copy(alpha = 0.22f), RoundedCornerShape(10.dp))
+                        .border(1.dp, Color.White.copy(alpha = 0.20f), RoundedCornerShape(10.dp)),
+                ) {
+                    preview?.let {
+                        Image(it.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                    }
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                CropButton("Reset", false, enabled, {
-                    zoom = minimumZoom
-                    translation = Offset.Zero
-                }, Modifier.weight(1f), colors.accent)
-                CropButton(configuration.confirmTitle, true, enabled, {
+                if (configuration.allowsReset) {
+                    CropButton(stringResource(R.string.bioscan_capture_crop_reset), false, enabled, {
+                        zoom = minimumZoom
+                        translation = Offset.Zero
+                    }, Modifier.weight(1f), colors.accent)
+                }
+                CropButton(resolvedConfirmTitle, true, enabled, {
                     croppedBitmap()?.let(onConfirm)
                 }, Modifier.weight(1f), colors.accent, onConfirmBoundsChanged)
             }
@@ -240,13 +317,24 @@ fun ImageCropEditor(
 }
 
 @Composable
-private fun BoxScope.CropMask(cropRect: Rect, accent: Color, showsGrid: Boolean) {
+private fun BoxScope.CropMask(
+    cropRect: Rect,
+    accent: Color,
+    showsGrid: Boolean,
+    cornerRadius: Dp,
+) {
     Canvas(Modifier.fillMaxSize().testTag("recognition-crop-frame")) {
         drawRect(Color.Black.copy(alpha = 0.36f), size = Size(size.width, cropRect.top))
         drawRect(Color.Black.copy(alpha = 0.36f), Offset(0f, cropRect.bottom), Size(size.width, size.height - cropRect.bottom))
         drawRect(Color.Black.copy(alpha = 0.36f), Offset(0f, cropRect.top), Size(cropRect.left, cropRect.height))
         drawRect(Color.Black.copy(alpha = 0.36f), Offset(cropRect.right, cropRect.top), Size(size.width - cropRect.right, cropRect.height))
-        drawRoundRect(accent, cropRect.topLeft, cropRect.size, CornerRadius(14.dp.toPx()), style = Stroke(2.dp.toPx()))
+        drawRoundRect(
+            accent,
+            cropRect.topLeft,
+            cropRect.size,
+            CornerRadius(cornerRadius.toPx()),
+            style = Stroke(2.dp.toPx()),
+        )
         if (showsGrid) {
             val line = Color.White.copy(alpha = 0.18f)
             repeat(2) { index ->

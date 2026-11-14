@@ -24,6 +24,8 @@ android {
 
 dependencies {
     api(project(":design"))
+    // 云收藏区块只用到同步状态契约，不引入任何远端实现。
+    api(project(":cloudsync"))
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
@@ -38,9 +40,11 @@ val sharedDir = rootProject.file("../BioScanKit-iOS/Shared")
 val syncSharedAssets by tasks.registering(Copy::class) {
     from(sharedDir) {
         include("RecommendedApps*.json")
+        include("RelatedRoutes.json")
         include("Icons/*.png")
     }
-    into(layout.buildDirectory.dir("generated/sharedAssets"))
+    // 落到 assets/bioscan_shared 下，与 RecommendedAppsLoader 读取路径保持一致。
+    into(layout.buildDirectory.dir("generated/sharedAssets/bioscan_shared"))
 }
 
 android.sourceSets.getByName("main").assets.srcDir(

@@ -30,6 +30,16 @@ object BioScanAnalytics {
     private var purchaseAttemptId: String? = null
     private var paywallContext: Map<String, Any?> = emptyMap()
     private var paywallCompletedSuccessfully = false
+    /** 与 iOS `PaywallVisit` 对齐：付费页停留时长与后台时长。 */
+    private var paywallStartedAtMillis: Long? = null
+    private var paywallBackgroundStartedAtMillis: Long? = null
+    private var paywallBackgroundMillis: Long = 0L
+    private var selectedProductId: String? = null
+    private var lastPurchaseOutcome: String = "no_purchase_attempt"
+    private var paywallDidConvert: Boolean = false
+    private var paywallDidRestore: Boolean = false
+    private var productsState: String = "not_loaded"
+    private var purchaseStartedAtMillis: Long? = null
 
     fun configure(context: Context, configuration: AnalyticsConfiguration) {
         synchronized(lock) {
@@ -159,6 +169,10 @@ object BioScanAnalytics {
         if (isPaywallEvent && normalized["product_id"] == null && normalized["product"] != null) {
             normalized["product_id"] = normalized["product"] as Any
         }
+        // 与 iOS `sanitize` 对齐：会员等级缺省时用 membership_tier 兜底。
+        if (normalized["entitlement_state"] == null && normalized["membership_tier"] != null) {
+            normalized["entitlement_state"] = normalized["membership_tier"] as Any
+        }
         if (canonicalName in setOf(
                 "recognition_started", "recognition_succeeded", "recognition_failed", "recognition_blocked",
             ) && normalized["feature"] == null
@@ -175,6 +189,15 @@ object BioScanAnalytics {
                     paywallSessionId = UUID.randomUUID().toString().lowercase(Locale.US)
                     purchaseAttemptId = null
                     paywallCompletedSuccessfully = false
+                    paywallStartedAtMillis = System.currentTimeMillis()
+                    paywallBackgroundStartedAtMillis = null
+                    paywallBackgroundMillis = 0L
+                    selectedProductId = normalized["product_id"] as? String
+                    lastPurchaseOutcome = "no_purchase_attempt"
+                    paywallDidConvert = false
+                    paywallDidRestore = false
+                    productsState = "not_loaded"
+                    purchaseStartedAtMillis = null
                     paywallContext = normalized.filterKeys {
                         it in setOf(
                             "paywall_id", "variant", "placement", "trigger", "source",
@@ -183,17 +206,46 @@ object BioScanAnalytics {
                     }
                 }
 
+                "paywall_products_loaded" -> {
+                    productsState = (normalized["products_state"] as? String) ?: "loaded"
+                }
+
+                "paywall_products_load_failed" -> productsState = "failed"
+
+                "paywall_backgrounded" -> {
+                    if (paywallBackgroundStartedAtMillis == null) {
+                        paywallBackgroundStartedAtMillis = System.currentTimeMillis()
+                    }
+                }
+
+                "paywall_resumed" -> {
+                    paywallBackgroundStartedAtMillis?.let {
+                        paywallBackgroundMillis += (System.currentTimeMillis() - it).coerceAtLeast(0L)
+                    }
+                    paywallBackgroundStartedAtMillis = null
+                }
+
                 "purchase_started" -> {
                     if (paywallSessionId == null) {
                         paywallSessionId = UUID.randomUUID().toString().lowercase(Locale.US)
                     }
                     purchaseAttemptId = UUID.randomUUID().toString().lowercase(Locale.US)
+                    purchaseStartedAtMillis = System.currentTimeMillis()
+                    lastPurchaseOutcome = "purchase_pending"
                 }
 
                 "purchase_success" -> {
                     paywallCompletedSuccessfully = true
+                    paywallDidConvert = true
+                    lastPurchaseOutcome = "purchase_succeeded"
                     if (purchaseAttemptId == null) return null
                 }
+
+                "purchase_cancelled" -> lastPurchaseOutcome = "purchase_cancelled"
+
+                "purchase_failed" -> lastPurchaseOutcome = "purchase_failed"
+
+                "restore_success" -> paywallDidRestore = true
             }
 
             if (isPaywallEvent) {
@@ -207,6 +259,30 @@ object BioScanAnalytics {
                 } ?: "other"
                 paywallSessionId?.let { normalized["paywall_session_id"] = it }
                 purchaseAttemptId?.let { normalized["purchase_attempt_id"] = it }
+                (normalized["product_id"] as? String)?.let { selectedProductId = it }
+                selectedProductId?.let { normalized["selected_product_id"] = it }
+                // 与 iOS `PaywallVisit.track` 对齐：停留时长、前台时长与终态。
+                val elapsed = paywallStartedAtMillis
+                    ?.let { (System.currentTimeMillis() - it).coerceAtLeast(0L) }
+                    ?: 0L
+                val background = paywallBackgroundMillis +
+                    (paywallBackgroundStartedAtMillis?.let { (System.currentTimeMillis() - it).coerceAtLeast(0L) } ?: 0L)
+                normalized["paywall_elapsed_ms"] = elapsed.toInt()
+                normalized["paywall_foreground_ms"] = (elapsed - background).coerceAtLeast(0L).toInt()
+                normalized["last_purchase_outcome"] = lastPurchaseOutcome
+                normalized["did_convert"] = paywallDidConvert
+                normalized["did_restore"] = paywallDidRestore
+                normalized["products_state"] = productsState
+                if (canonicalName.startsWith("purchase_")) {
+                    purchaseStartedAtMillis?.let {
+                        normalized["purchase_elapsed_ms"] =
+                            (System.currentTimeMillis() - it).coerceAtLeast(0L).toInt()
+                    }
+                }
+                // 与 iOS 对齐：成功购买时用 price 派生 revenue。
+                if (canonicalName == "purchase_success") {
+                    (normalized["price"] as? Number)?.let { normalized["revenue"] = it }
+                }
                 if (canonicalName == "paywall_dismissed") {
                     normalized["did_convert"] = paywallCompletedSuccessfully
                 }
@@ -227,6 +303,15 @@ object BioScanAnalytics {
                 paywallSessionId = null
                 paywallContext = emptyMap()
                 paywallCompletedSuccessfully = false
+                paywallStartedAtMillis = null
+                paywallBackgroundStartedAtMillis = null
+                paywallBackgroundMillis = 0L
+                selectedProductId = null
+                lastPurchaseOutcome = "no_purchase_attempt"
+                paywallDidConvert = false
+                paywallDidRestore = false
+                productsState = "not_loaded"
+                purchaseStartedAtMillis = null
             }
         }
 

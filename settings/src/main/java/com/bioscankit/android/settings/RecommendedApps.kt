@@ -3,14 +3,18 @@ package com.bioscankit.android.settings
 import android.content.Context
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,6 +26,15 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.rotate
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.layout.heightIn
 import com.bioscankit.android.design.BioScanDesign
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.booleanOrNull
@@ -126,6 +139,39 @@ object RecommendedAppsLoader {
     }
 }
 
+/** 未提供图标 composable 时的占位图标（首字母圆角方块）。 */
+@Composable
+fun RecommendedAppIconFallback(app: RecommendedApp) {
+    val colors = BioScanDesign.colors
+    Box(
+        modifier = Modifier
+            // 与 iOS 一致：78dp 容器内 74dp 图标。
+            .size(74.dp)
+            .background(colors.accent.copy(alpha = 0.16f), RoundedCornerShape(18.dp)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = app.title.take(1).uppercase(),
+            color = colors.accent,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Black),
+        )
+    }
+}
+
+/**
+ * 推荐应用海报卡，与 iOS `SettingsRecommendedAppCardView` 逐项对齐：
+ *
+ * | 项 | iOS | 这里 |
+ * | --- | --- | --- |
+ * | 圆角 | 24 | 24.dp |
+ * | 图标容器 | 78×78，圆角 20 | 78.dp，20.dp |
+ * | 最小高度 | 168 | 168.dp |
+ * | 标题 | 31 black | 31.sp Black |
+ * | 眉标 | RECOMMENDED 11 black，字距 1.1 | 同 |
+ * | 副标题 | 15 bold，白色 84% | 同 |
+ * | 装饰 | 右下 180×34 白 12%，-18° | 同 |
+ * | 描边 | 白色 20%，1pt | 同 |
+ */
 @Composable
 fun SettingsRecommendedAppCard(
     app: RecommendedApp,
@@ -137,42 +183,127 @@ fun SettingsRecommendedAppCard(
     val gradient = app.backgroundColors.ifEmpty {
         listOf(colors.accent, colors.success)
     }
+    val primaryAccent = gradient.first()
+
     androidx.compose.material3.Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 18.dp,
+                shape = RoundedCornerShape(24.dp),
+                ambientColor = primaryAccent.copy(alpha = 0.22f),
+                spotColor = primaryAccent.copy(alpha = 0.22f),
+            ),
         onClick = onClick,
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(24.dp),
         color = Color.Transparent,
     ) {
-        Row(
+        BoxWithConstraints(
             modifier = Modifier
-                .background(Brush.linearGradient(gradient))
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .background(
+                    Brush.linearGradient(gradient),
+                    RoundedCornerShape(24.dp),
+                )
+                .border(
+                    width = 1.dp,
+                    color = Color.White.copy(alpha = 0.20f),
+                    shape = RoundedCornerShape(24.dp),
+                ),
         ) {
+            // iOS 用 31pt + lineLimit(2) + minimumScaleFactor；窄屏（<360dp）下
+            // 31sp 会在单词中间断行，这里按可用宽度降一档，仍保留两行。
+            val compact = maxWidth < 360.dp
+            val titleSize = if (compact) 24.sp else 31.sp
+            val titleLineHeight = if (compact) 28.sp else 34.sp
+            // 右下角装饰斜条，对应 iOS `.overlay(alignment: .bottomTrailing)`
             Box(
                 modifier = Modifier
-                    .size(58.dp)
-                    .background(Color.White.copy(alpha = 0.92f), RoundedCornerShape(14.dp)),
-                contentAlignment = Alignment.Center,
-                content = icon,
+                    .align(Alignment.BottomEnd)
+                    .offset(x = 26.dp, y = (-8).dp)
+                    .size(width = 180.dp, height = 34.dp)
+                    .rotate(-18f)
+                    .background(Color.White.copy(alpha = 0.12f)),
             )
+
             Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 168.dp)
+                    .padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp),
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(78.dp)
+                            .shadow(
+                                elevation = 14.dp,
+                                shape = RoundedCornerShape(20.dp),
+                                ambientColor = primaryAccent.copy(alpha = 0.30f),
+                                spotColor = primaryAccent.copy(alpha = 0.30f),
+                            )
+                            .background(Color.White.copy(alpha = 0.94f), RoundedCornerShape(20.dp)),
+                        contentAlignment = Alignment.Center,
+                        content = icon,
+                    )
+
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(5.dp),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.bioscan_settings_recommended),
+                            color = Color.White.copy(alpha = 0.68f),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 1.1.sp,
+                            ),
+                        )
+                        Text(
+                            text = app.title,
+                            color = Color.White,
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontSize = titleSize,
+                                lineHeight = titleLineHeight,
+                                fontWeight = FontWeight.Black,
+                            ),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .background(Color.White.copy(alpha = 0.92f), CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            tint = primaryAccent,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
+                }
+
                 Text(
-                    app.title,
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Black),
-                )
-                Text(
-                    app.description,
-                    color = Color.White.copy(alpha = 0.90f),
-                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                    text = app.description,
+                    color = Color.White.copy(alpha = 0.84f),
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 15.sp,
+                        lineHeight = 19.sp,
+                        fontWeight = FontWeight.Bold,
+                    ),
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
-            Text("↗", color = Color.White, fontWeight = FontWeight.Black)
         }
     }
 }

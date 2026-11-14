@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bioscan_paywall_restore">WIEDERHERSTELLEN</string>
+    <string name="bioscan_paywall_retry">Erneut versuchen</string>
+    <string name="bioscan_paywall_connecting">Verbindung zu Google Play…</string>
+    <string name="bioscan_paywall_notice">Hinweis</string>
+    <string name="bioscan_paywall_close">Schließen</string>
+    <string name="bioscan_paywall_unavailable">Nicht verfügbar</string>
+    <string name="bioscan_paywall_no_credits">Keine Bestimmungen mehr übrig.</string>
+    <string name="bioscan_paywall_busy">Eine Bestimmung läuft bereits.</string>
+    <string name="bioscan_paywall_ok">OK</string>
+    <string name="bioscan_paywall_connecting_title">Verbindung zum Store</string>
+    <string name="bioscan_paywall_connecting_message">Die Produkte werden noch geladen. Bitte warte einen Moment und versuche es erneut.</string>
+    <string name="bioscan_paywall_pending_title">Kauf ausstehend</string>
+    <string name="bioscan_paywall_pending_message">Deine Zahlung wird verarbeitet. Die Scans werden nach Abschluss hinzugefügt.</string>
+    <string name="bioscan_paywall_purchase_failed_title">Kauf fehlgeschlagen</string>
+    <string name="bioscan_paywall_restore_failed_title">Wiederherstellung fehlgeschlagen</string>
+    <string name="bioscan_paywall_restore_nothing_message">Kein früherer Lifetime-Kauf gefunden.</string>
+</resources>

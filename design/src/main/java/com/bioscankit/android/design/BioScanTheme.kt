@@ -30,13 +30,78 @@ data class BioScanTheme(
     val primaryText: AdaptiveColor,
     val secondaryText: AdaptiveColor,
     val border: AdaptiveColor,
+    /**
+     * 系统语义底色，对应 iOS 的 `Color(uiColor: .systemBackground)`。
+     *
+     * 设置页、语言页等「系统风格」页面在 iOS 上不使用品牌色，只使用系统中性色；
+     * 这里默认取 iOS 亮/暗两套系统底色，宿主可覆盖。
+     */
+    val systemBackground: AdaptiveColor = AdaptiveColor(
+        light = Color(0xFFFFFFFF),
+        dark = Color(0xFF000000),
+    ),
+    /**
+     * 系统语义次级底色，对应 iOS 的 `Color(uiColor: .secondarySystemBackground)`。
+     *
+     * 设置页卡片、会员卡、弹窗容器都用它，默认值取 iOS 实测色值。
+     */
+    val secondarySystemBackground: AdaptiveColor = AdaptiveColor(
+        light = Color(0xFFF2F2F7),
+        dark = Color(0xFF1C1C1E),
+    ),
     val cardCornerRadius: Dp = 18.dp,
     val buttonCornerRadius: Dp = 14.dp,
     val horizontalPadding: Dp = 18.dp,
     val sectionSpacing: Dp = 20.dp,
 ) {
     companion object {
-        /** Canonical visual configuration, matched to BioScanKit's iNature theme. */
+        /**
+         * 中性兜底主题，**不绑定任何宿主品牌色**。
+         *
+         * 用途：当宿主忘记调用 `BioScanDesignSystem(theme = ...)` 时，
+         * 组件会落到这里，呈现无品牌的中性灰蓝，从而让「漏传主题」
+         * 变成肉眼可见的问题，而不是悄悄套用别的 App 的品牌色。
+         *
+         * 历史背景：默认值曾是 [INature]，导致 iNature 长期依赖默认值、
+         * 色值漂移也无法察觉。改为中性后，漏传即暴露。
+         */
+        val Neutral = BioScanTheme(
+            accent = Color(0xFF5A6B7A),
+            success = Color(0xFF4C8C5A),
+            warning = Color(0xFFB8863B),
+            danger = Color(0xFFB4534F),
+            pageBackground = AdaptiveColor(
+                light = Color(0xFFF6F7F8),
+                dark = Color(0xFF14171A),
+            ),
+            cardBackground = AdaptiveColor(
+                light = Color.White,
+                dark = Color(0xFF1F2429),
+            ),
+            elevatedCardBackground = AdaptiveColor(
+                light = Color(0xFFEFF1F3),
+                dark = Color(0xFF272D33),
+            ),
+            primaryText = AdaptiveColor(
+                light = Color(0xFF1C2226),
+                dark = Color(0xFFEDF1F4),
+            ),
+            secondaryText = AdaptiveColor(
+                light = Color(0xFF6B767F),
+                dark = Color(0xFF9AA6B0),
+            ),
+            border = AdaptiveColor(
+                light = Color(0xFFDCE1E6),
+                dark = Color.White.copy(alpha = 0.12f),
+            ),
+        )
+
+        /**
+         * iNature 的品牌主题。
+         *
+         * 注意：**不再是默认值**。宿主必须显式传入，
+         * 例如 `BioScanDesignSystem(theme = BioScanTheme.INature)`。
+         */
         val INature = BioScanTheme(
             accent = Color(0xFF248533),
             success = Color(0xFF299E54),
@@ -82,9 +147,11 @@ data class ResolvedBioScanColors(
     val primaryText: Color,
     val secondaryText: Color,
     val border: Color,
+    val systemBackground: Color,
+    val secondarySystemBackground: Color,
 )
 
-private val LocalBioScanTheme = staticCompositionLocalOf { BioScanTheme.INature }
+private val LocalBioScanTheme = staticCompositionLocalOf { BioScanTheme.Neutral }
 private val LocalBioScanIsDark = staticCompositionLocalOf<Boolean?> { null }
 
 object BioScanDesign {
@@ -115,11 +182,13 @@ fun BioScanTheme.resolve(isDark: Boolean): ResolvedBioScanColors = ResolvedBioSc
     primaryText = primaryText.resolve(isDark),
     secondaryText = secondaryText.resolve(isDark),
     border = border.resolve(isDark),
+    systemBackground = systemBackground.resolve(isDark),
+    secondarySystemBackground = secondarySystemBackground.resolve(isDark),
 )
 
 @Composable
 fun BioScanDesignSystem(
-    theme: BioScanTheme = BioScanTheme.INature,
+    theme: BioScanTheme = BioScanTheme.Neutral,
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {

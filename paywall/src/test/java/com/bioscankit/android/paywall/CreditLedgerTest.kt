@@ -78,7 +78,7 @@ class CreditLedgerTest {
     }
 }
 
-private class MemoryCreditStorage(
+internal class MemoryCreditStorage(
     private var free: Int = 0,
     private var bonus: Int = 0,
     private var purchased: Int = 0,

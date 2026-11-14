@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bioscan_paywall_restore">復元</string>
+    <string name="bioscan_paywall_retry">再試行</string>
+    <string name="bioscan_paywall_connecting">Google Play に接続中…</string>
+    <string name="bioscan_paywall_notice">お知らせ</string>
+    <string name="bioscan_paywall_close">閉じる</string>
+    <string name="bioscan_paywall_unavailable">利用できません</string>
+    <string name="bioscan_paywall_no_credits">識別回数が残っていません。</string>
+    <string name="bioscan_paywall_busy">すでに識別を実行中です。</string>
+    <string name="bioscan_paywall_ok">OK</string>
+    <string name="bioscan_paywall_connecting_title">ストアに接続中</string>
+    <string name="bioscan_paywall_connecting_message">商品を読み込み中です。しばらく待ってからもう一度お試しください。</string>
+    <string name="bioscan_paywall_pending_title">購入保留中</string>
+    <string name="bioscan_paywall_pending_message">お支払いを処理しています。完了するとスキャンが追加されます。</string>
+    <string name="bioscan_paywall_purchase_failed_title">購入に失敗しました</string>
+    <string name="bioscan_paywall_restore_failed_title">復元に失敗しました</string>
+    <string name="bioscan_paywall_restore_nothing_message">以前の Lifetime 購入が見つかりません。</string>
+</resources>

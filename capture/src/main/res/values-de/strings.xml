@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bioscan_capture_title">Identifizieren</string>
+    <string name="bioscan_capture_instruction">Richte dein Motiv klar im Rahmen aus</string>
+    <string name="bioscan_capture_align_clearly">Motiv klar ausrichten</string>
+    <string name="bioscan_capture_keep_subject_clear">Halte das Motiv klar und zentriert.</string>
+    <string name="bioscan_capture_analyzing_field">Analyzing field Arten...</string>
+    <string name="bioscan_capture_permission_title">Kamerazugriff</string>
+    <string name="bioscan_capture_permission_message">Erlaube den Kamerazugriff, um dein Motiv zu fotografieren und zu identifizieren.</string>
+    <string name="bioscan_capture_permission_denied">Der Kamerazugriff ist deaktiviert. Aktiviere ihn in den Einstellungen.</string>
+    <string name="bioscan_capture_permission_denied_enable">Der Kamerazugriff ist deaktiviert. Aktiviere ihn in den Einstellungen.</string>
+    <string name="bioscan_capture_status_on_device">Erkennung auf dem Gerät</string>
+    <string name="bioscan_capture_processing_title">Analyse läuft</string>
+    <string name="bioscan_capture_processing_subtitle">Comparing visual features on this Gerät…</string>
+    <string name="bioscan_capture_processing_instruction">Arten im Feld werden analysiert …</string>
+    <string name="bioscan_capture_processing_eyebrow">KI-SCAN</string>
+    <string name="bioscan_capture_processing_preparing">Scan wird vorbereitet…</string>
+    <string name="bioscan_capture_processing_detecting">Erkennung läuft…</string>
+    <string name="bioscan_capture_processing_extracting">Merkmale werden extrahiert…</string>
+    <string name="bioscan_capture_processing_comparing">Arten werden verglichen…</string>
+    <string name="bioscan_capture_processing_waiting">Warten auf Ergebnis…</string>
+    <string name="bioscan_capture_processing_finishing">Verarbeitung</string>
+    <string name="bioscan_capture_recognition_failed">Identifizierung fehlgeschlagen</string>
+    <string name="bioscan_capture_try_again">Erneut versuchen</string>
+    <string name="bioscan_capture_back_to_camera">Zurück zur Kamera</string>
+    <string name="bioscan_capture_cancel">Abbrechen</string>
+    <string name="bioscan_capture_continue">Weiter</string>
+    <string name="bioscan_capture_ok">OK</string>
+    <string name="bioscan_capture_open_settings">Einstellungen öffnen</string>
+    <string name="bioscan_capture_camera_error">Kamerafehler</string>
+    <string name="bioscan_capture_camera_unavailable">Die Rückkamera ist nicht verfügbar.</string>
+    <string name="bioscan_capture_camera_config_failed">Die Kamera konnte nicht konfiguriert werden.</string>
+    <string name="bioscan_capture_photo_process_failed">Das aufgenommene Foto konnte nicht verarbeitet werden.</string>
+    <string name="bioscan_capture_close_camera">Kamera schließen</string>
+    <string name="bioscan_capture_close_crop_editor">Zuschnitteditor schließen</string>
+    <string name="bioscan_capture_show_camera_tips">Kameratipps anzeigen</string>
+    <string name="bioscan_capture_choose_photo">Foto auswählen</string>
+    <string name="bioscan_capture_choose_from_photos">Aus Fotos auswählen</string>
+    <string name="bioscan_capture_take_photo">Foto aufnehmen</string>
+    <string name="bioscan_capture_flash_off">Blitz ausschalten</string>
+    <string name="bioscan_capture_flash_on">Blitz einschalten</string>
+    <string name="bioscan_capture_crop_reset">Zurücksetzen</string>
+    <string name="bioscan_capture_crop_use">Zuschnitt verwenden</string>
+    <string name="bioscan_capture_crop_preview">Zuschnittvorschau</string>
+    <string name="bioscan_capture_zoom_times">%1$s-facher Zoom</string>
+    <string name="bioscan_capture_photo_being_analyzed">Photo being analyzed</string>
+</resources>

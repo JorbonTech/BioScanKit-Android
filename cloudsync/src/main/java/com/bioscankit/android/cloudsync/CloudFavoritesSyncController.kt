@@ -47,15 +47,31 @@ class CloudFavoritesSyncController(
         scope.launch { push(snapshot) }
     }
 
-    fun clearFavoritesOnThisDevice() {
+    /** 只清本地收藏（不改变同步开关）。 */
+    fun clearLocalFavoritesOnly(onComplete: (() -> Unit)? = null) {
         scope.launch {
-            withContext(Dispatchers.IO) { localStore.clearLocalFavorites() }
+            runCatching { withContext(Dispatchers.IO) { localStore.clearLocalFavorites() } }
+                .onFailure {
+                    _status.value = CloudFavoritesSyncStatus.Failed(it.message.orEmpty())
+                }
+            onComplete?.invoke()
         }
     }
 
-    fun deleteFavoritesFromCloud() {
+    /** 与 iOS 一致：关闭同步后清空本地收藏，避免下次同步又拉回来。 */
+    fun clearFavoritesOnThisDevice(onComplete: (() -> Unit)? = null) {
+        setEnabled(false)
+        clearLocalFavoritesOnly(onComplete)
+    }
+
+    /** 清空云端收藏（本地收藏由调用方决定是否一并清掉）。 */
+    fun deleteFavoritesFromCloud(onComplete: (() -> Unit)? = null) {
         scope.launch {
             runCatching { remoteStore.clearAll() }
+                .onSuccess {
+                    _status.value = CloudFavoritesSyncStatus.Synced(System.currentTimeMillis())
+                    onComplete?.invoke()
+                }
                 .onFailure { _status.value = CloudFavoritesSyncStatus.Failed(it.message.orEmpty()) }
         }
     }
@@ -67,9 +83,18 @@ class CloudFavoritesSyncController(
         }
         scope.launch {
             mutex.withLock {
+                // 排队期间用户可能已经关掉同步：不要再把状态改成 Unavailable/Synced。
+                if (!_enabled.value) {
+                    _status.value = CloudFavoritesSyncStatus.Disabled
+                    return@withLock
+                }
                 _status.value = CloudFavoritesSyncStatus.CheckingAccount
                 if (!runCatching { remoteStore.isAvailable() }.getOrDefault(false)) {
-                    _status.value = CloudFavoritesSyncStatus.Unavailable
+                    _status.value = if (_enabled.value) {
+                        CloudFavoritesSyncStatus.Unavailable
+                    } else {
+                        CloudFavoritesSyncStatus.Disabled
+                    }
                     return@withLock
                 }
                 _status.value = CloudFavoritesSyncStatus.Syncing

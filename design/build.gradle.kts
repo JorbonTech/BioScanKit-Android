@@ -31,4 +31,5 @@ dependencies {
     api("androidx.compose.material:material-icons-extended")
     api("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.core:core-ktx:1.15.0")
+    testImplementation("junit:junit:4.13.2")
 }

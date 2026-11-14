@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bioscan_capture_title">Identificeer</string>
+    <string name="bioscan_capture_instruction">Lijn je onderwerp duidelijk uit in het kader</string>
+    <string name="bioscan_capture_align_clearly">Lijn het onderwerp duidelijk uit</string>
+    <string name="bioscan_capture_keep_subject_clear">Houd het onderwerp scherp en gecentreerd.</string>
+    <string name="bioscan_capture_analyzing_field">Soorten in het veld analyseren…</string>
+    <string name="bioscan_capture_permission_title">Cameratoegang</string>
+    <string name="bioscan_capture_permission_message">Sta cameratoegang toe om je onderwerp te fotograferen en te identificeren.</string>
+    <string name="bioscan_capture_permission_denied">Cameratoegang is uitgeschakeld. Schakel deze in via Instellingen.</string>
+    <string name="bioscan_capture_permission_denied_enable">Cameratoegang is uitgeschakeld. Schakel deze in via Instellingen.</string>
+    <string name="bioscan_capture_status_on_device">Herkenning op het apparaat</string>
+    <string name="bioscan_capture_processing_title">Analyseren</string>
+    <string name="bioscan_capture_processing_subtitle">Visuele kenmerken op dit apparaat vergelijken…</string>
+    <string name="bioscan_capture_processing_instruction">Soorten in het veld analyseren…</string>
+    <string name="bioscan_capture_processing_eyebrow">AI-SCAN</string>
+    <string name="bioscan_capture_processing_preparing">Scan voorbereiden…</string>
+    <string name="bioscan_capture_processing_detecting">Detecteren…</string>
+    <string name="bioscan_capture_processing_extracting">Kenmerken extraheren…</string>
+    <string name="bioscan_capture_processing_comparing">Soorten vergelijken…</string>
+    <string name="bioscan_capture_processing_waiting">Wachten op resultaat…</string>
+    <string name="bioscan_capture_processing_finishing">Verwerken</string>
+    <string name="bioscan_capture_recognition_failed">Herkenning mislukt</string>
+    <string name="bioscan_capture_try_again">Probeer opnieuw</string>
+    <string name="bioscan_capture_back_to_camera">Terug naar camera</string>
+    <string name="bioscan_capture_cancel">Annuleer</string>
+    <string name="bioscan_capture_continue">Ga door</string>
+    <string name="bioscan_capture_ok">OK</string>
+    <string name="bioscan_capture_open_settings">Open Instellingen</string>
+    <string name="bioscan_capture_camera_error">Camerafout</string>
+    <string name="bioscan_capture_camera_unavailable">De achtercamera is niet beschikbaar.</string>
+    <string name="bioscan_capture_camera_config_failed">De camera kon niet worden geconfigureerd.</string>
+    <string name="bioscan_capture_photo_process_failed">De gemaakte foto kon niet worden verwerkt.</string>
+    <string name="bioscan_capture_close_camera">Camera sluiten</string>
+    <string name="bioscan_capture_close_crop_editor">Uitsnede-editor sluiten</string>
+    <string name="bioscan_capture_show_camera_tips">Cameratips tonen</string>
+    <string name="bioscan_capture_choose_photo">Kies een foto</string>
+    <string name="bioscan_capture_choose_from_photos">Kies uit Foto’s</string>
+    <string name="bioscan_capture_take_photo">Maak een foto</string>
+    <string name="bioscan_capture_flash_off">Flitser uitschakelen</string>
+    <string name="bioscan_capture_flash_on">Flitser inschakelen</string>
+    <string name="bioscan_capture_crop_reset">Stel opnieuw in</string>
+    <string name="bioscan_capture_crop_use">Uitsnede gebruiken</string>
+    <string name="bioscan_capture_crop_preview">Voorbeeld van uitsnede</string>
+    <string name="bioscan_capture_zoom_times">Zoom %1$s×</string>
+    <string name="bioscan_capture_photo_being_analyzed">Photo being analyzed</string>
+</resources>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bioscan_paywall_restore">RESTAURAR</string>
+    <string name="bioscan_paywall_retry">Reintentar</string>
+    <string name="bioscan_paywall_connecting">Conectando con Google Play…</string>
+    <string name="bioscan_paywall_notice">Aviso</string>
+    <string name="bioscan_paywall_close">Cerrar</string>
+    <string name="bioscan_paywall_unavailable">No disponible</string>
+    <string name="bioscan_paywall_no_credits">No quedan identificaciones.</string>
+    <string name="bioscan_paywall_busy">Ya hay una identificación en curso.</string>
+    <string name="bioscan_paywall_ok">OK</string>
+    <string name="bioscan_paywall_connecting_title">Conectando con la tienda</string>
+    <string name="bioscan_paywall_connecting_message">Los productos aún se están cargando. Espera un momento e inténtalo de nuevo.</string>
+    <string name="bioscan_paywall_pending_title">Compra pendiente</string>
+    <string name="bioscan_paywall_pending_message">Tu pago se está procesando. Los escaneos se añadirán al completarse.</string>
+    <string name="bioscan_paywall_purchase_failed_title">Error en la compra</string>
+    <string name="bioscan_paywall_restore_failed_title">Error al restaurar</string>
+    <string name="bioscan_paywall_restore_nothing_message">No se encontró ninguna compra Lifetime anterior.</string>
+</resources>

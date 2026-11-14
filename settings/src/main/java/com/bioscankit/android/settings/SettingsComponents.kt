@@ -27,6 +27,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.CallMade
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -40,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -47,9 +50,11 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
+import com.bioscankit.android.design.BioScanBackButton
 import com.bioscankit.android.design.BioScanDesign
 
 internal data class SettingsPalette(
@@ -59,14 +64,21 @@ internal data class SettingsPalette(
     val iconTileBackground: Color,
 )
 
+/**
+ * 设置类页面的调色板。
+ *
+ * 与 iOS `SettingsPageContainer` / `SettingsCardView` 一致：
+ * 页面背景用 `systemBackground`，卡片与图标底座用 `secondarySystemBackground`，
+ * 即**系统中性色**，不掺入宿主品牌色（品牌色只用于图标和强调文字）。
+ */
 @Composable
 internal fun settingsPalette(): SettingsPalette {
     val colors = BioScanDesign.colors
     return SettingsPalette(
-        pageTop = colors.cardBackground,
-        pageBottom = colors.pageBackground,
-        cardBackground = colors.elevatedCardBackground,
-        iconTileBackground = colors.cardBackground,
+        pageTop = colors.systemBackground,
+        pageBottom = colors.secondarySystemBackground,
+        cardBackground = colors.secondarySystemBackground,
+        iconTileBackground = colors.systemBackground,
     )
 }
 
@@ -152,7 +164,10 @@ fun SettingsPageContainer(
                 .verticalScroll(rememberScrollState())
                 .statusBarsPadding()
                 .navigationBarsPadding()
-                .padding(horizontal = metrics.horizontalPaddingDp.dp, vertical = 10.dp),
+                .padding(horizontal = metrics.horizontalPaddingDp.dp, vertical = 10.dp)
+                // 与 iOS SettingsView 的 `.safeAreaInset(edge: .bottom) { 88 }` 一致：
+                // 设置页底部有 Tab 栏悬浮，留出同样高度的空白，避免最后一行被挡住。
+                .padding(bottom = 88.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Column(
@@ -182,10 +197,8 @@ fun SettingsTopBar(
     title: String,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    backContent: @Composable () -> Unit,
 ) {
     val colors = BioScanDesign.colors
-    val navigationBackground = settingsPalette().iconTileBackground
     Box(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
@@ -193,29 +206,19 @@ fun SettingsTopBar(
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium.copy(
-                fontSize = 18.sp,
-                lineHeight = 23.sp,
-                fontWeight = FontWeight.Bold,
+                fontSize = 17.sp,
+                lineHeight = 22.sp,
+                fontWeight = FontWeight.SemiBold,
             ),
             color = colors.primaryText,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        Surface(
-            modifier = Modifier.align(Alignment.CenterStart),
+        BioScanBackButton(
             onClick = onBack,
-            shape = CircleShape,
-            color = navigationBackground,
-            tonalElevation = 0.dp,
-            shadowElevation = 0.dp,
-        ) {
-            Box(
-                modifier = Modifier.size(34.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                backContent()
-            }
-        }
+            contentDescription = null,
+            modifier = Modifier.align(Alignment.CenterStart),
+        )
     }
 }
 
@@ -244,7 +247,6 @@ fun SettingsSectionTitle(
         style = MaterialTheme.typography.labelMedium.copy(
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
-            letterSpacing = 0.4.sp,
         ),
         color = BioScanDesign.colors.secondaryText,
         modifier = modifier,
@@ -297,8 +299,8 @@ fun SettingsFieldLabel(
         text = text,
         modifier = modifier,
         style = MaterialTheme.typography.bodyLarge.copy(
-            fontSize = 16.sp,
-            lineHeight = 24.sp,
+            fontSize = 14.sp,
+            lineHeight = 20.sp,
             fontWeight = FontWeight.Bold,
         ),
         color = BioScanDesign.colors.primaryText,
@@ -352,13 +354,15 @@ fun SettingsRow(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     leading: @Composable () -> Unit,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     val colors = BioScanDesign.colors
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clickable(enabled = enabled, onClick = onClick)
-            .alpha(if (enabled) 1f else 0.5f),
+            .alpha(if (enabled) 1f else 0.5f)
+            .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = if (subtitle == null) Alignment.CenterVertically else Alignment.Top,
     ) {
@@ -399,15 +403,28 @@ fun SettingsRow(
                 color = colors.secondaryText,
             )
         }
+        if (trailing != null) {
+            trailing()
+        }
+
         when (accessory) {
             SettingsAccessory.None -> Unit
-            SettingsAccessory.Navigation,
-            SettingsAccessory.External,
-            -> Text(
-                text = if (accessory == SettingsAccessory.Navigation) "›" else "↗",
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                color = colors.secondaryText,
-                modifier = Modifier.padding(top = if (subtitle == null) 2.dp else 6.dp),
+            SettingsAccessory.Navigation -> Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = colors.secondaryText,
+                modifier = Modifier
+                    .padding(top = if (subtitle == null) 2.dp else 6.dp)
+                    // iOS: chevron.right 12 bold
+                    .size(14.dp),
+            )
+            SettingsAccessory.External -> Icon(
+                imageVector = Icons.AutoMirrored.Filled.CallMade,
+                contentDescription = null,
+                tint = colors.secondaryText,
+                modifier = Modifier
+                    .padding(top = if (subtitle == null) 2.dp else 6.dp)
+                    .size(14.dp),
             )
         }
     }
@@ -441,6 +458,7 @@ fun SettingsIcon(
     modifier: Modifier = Modifier,
     contentDescription: String? = null,
     style: SettingsIconStyle = SettingsIconStyle.Accent,
+    size: androidx.compose.ui.unit.Dp = 17.dp,
 ) {
     val colors = BioScanDesign.colors
     Icon(
@@ -451,7 +469,7 @@ fun SettingsIcon(
             SettingsIconStyle.Danger -> colors.danger
             SettingsIconStyle.Primary -> colors.primaryText
         },
-        modifier = modifier.size(21.dp),
+        modifier = modifier.size(size),
     )
 }
 
@@ -468,7 +486,8 @@ fun SettingsDangerRow(
         modifier = modifier
             .fillMaxWidth()
             .clickable(enabled = enabled, onClick = onClick)
-            .alpha(if (enabled) 1f else 0.5f),
+            .alpha(if (enabled) 1f else 0.5f)
+            .padding(vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -491,9 +510,9 @@ fun SettingsDivider(modifier: Modifier = Modifier) {
         modifier = modifier,
         thickness = 1.dp,
         color = if (BioScanDesign.isDark) {
-            Color.White.copy(alpha = 0.14f)
+            Color.White.copy(alpha = 0.18f)
         } else {
-            Color(0xFFD6E0E8)
+            Color.Black.copy(alpha = 0.07f)
         },
     )
 }
@@ -513,19 +532,30 @@ fun SettingsSegmentedControl(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(38.dp)
-            .clip(RoundedCornerShape(9.dp))
+            .height(34.dp)
+            .clip(RoundedCornerShape(8.dp))
             .background(container)
             .padding(2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         options.forEach { option ->
+            val isSelected = option.id == selectedId
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxSize()
-                    .clip(RoundedCornerShape(7.dp))
-                    .background(if (option.id == selectedId) selected else Color.Transparent)
+                    .then(
+                        if (isSelected) {
+                            Modifier.shadow(
+                                elevation = 1.5.dp,
+                                shape = RoundedCornerShape(6.dp),
+                            )
+                        } else {
+                            Modifier
+                        }
+                    )
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(if (isSelected) selected else Color.Transparent)
                     .clickable { onSelected(option.id) },
                 contentAlignment = Alignment.Center,
             ) {
@@ -548,6 +578,9 @@ fun SettingsMembershipCard(
     modifier: Modifier = Modifier,
     isActionDisabled: Boolean = false,
     onAction: (() -> Unit)? = null,
+    /** 覆盖默认的 accent 底色/白字，供宿主对齐自家 CTA 配色。 */
+    actionBackground: Color? = null,
+    actionContentColor: Color? = null,
 ) {
     val colors = BioScanDesign.colors
     val palette = settingsPalette()
@@ -559,7 +592,9 @@ fun SettingsMembershipCard(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         when (state) {
-            is SettingsMembershipState.Lifetime -> Row(
+            is SettingsMembershipState.Lifetime,
+            is SettingsMembershipState.LifetimeCopy,
+            -> Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -570,9 +605,15 @@ fun SettingsMembershipCard(
                     tint = colors.accent,
                     modifier = Modifier.size(16.dp),
                 )
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
                     Text(
-                        text = "Lifetime Membership",
+                        text = when (state) {
+                            is SettingsMembershipState.LifetimeCopy -> state.title
+                            else -> "Lifetime Membership"
+                        },
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontSize = 14.sp,
                             lineHeight = 21.sp,
@@ -581,7 +622,10 @@ fun SettingsMembershipCard(
                         color = colors.primaryText,
                     )
                     Text(
-                        text = "Unlimited scans",
+                        text = when (state) {
+                            is SettingsMembershipState.LifetimeCopy -> state.subtitle
+                            else -> "Unlimited scans"
+                        },
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontSize = 12.sp,
                             lineHeight = 16.sp,
@@ -593,9 +637,12 @@ fun SettingsMembershipCard(
             }
 
             is SettingsMembershipState.Upgrade -> {
-                state.remainingScans.coerceAtLeast(0).takeIf { it > 0 }?.let { remainingScans ->
+                val remainingText = state.remainingText
+                    ?: state.remainingScans.coerceAtLeast(0).takeIf { it > 0 }
+                        ?.let { stringResource(R.string.bioscan_settings_membership_remaining, it) }
+                remainingText?.takeIf(String::isNotBlank)?.let {
                     Text(
-                        text = "$remainingScans scans to go — enjoy discovering more!",
+                        text = remainingText,
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
@@ -609,11 +656,11 @@ fun SettingsMembershipCard(
                         enabled = !isActionDisabled,
                         onClick = action,
                         shape = RoundedCornerShape(999.dp),
-                        color = colors.accent,
-                        contentColor = Color.White,
+                        color = actionBackground ?: colors.accent,
+                        contentColor = actionContentColor ?: Color.White,
                     ) {
                         Text(
-                            text = "Upgrade to Lifetime",
+                            text = state.actionTitle ?: stringResource(R.string.bioscan_settings_membership_upgrade),
                             style = MaterialTheme.typography.labelLarge.copy(
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Black,
@@ -623,7 +670,7 @@ fun SettingsMembershipCard(
                     }
                 }
                 Text(
-                    text = "No subscription. Pay once. Use forever.",
+                    text = state.footnote ?: stringResource(R.string.bioscan_settings_membership_footnote),
                     style = MaterialTheme.typography.labelLarge.copy(
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,

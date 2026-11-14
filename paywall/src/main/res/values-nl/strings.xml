@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bioscan_paywall_restore">HERSTELLEN</string>
+    <string name="bioscan_paywall_retry">Opnieuw proberen</string>
+    <string name="bioscan_paywall_connecting">Verbinden met Google Play…</string>
+    <string name="bioscan_paywall_notice">Melding</string>
+    <string name="bioscan_paywall_close">Sluiten</string>
+    <string name="bioscan_paywall_unavailable">Niet beschikbaar</string>
+    <string name="bioscan_paywall_no_credits">Geen identificaties meer over.</string>
+    <string name="bioscan_paywall_busy">Er loopt al een identificatie.</string>
+    <string name="bioscan_paywall_ok">OK</string>
+    <string name="bioscan_paywall_connecting_title">Verbinden met winkel</string>
+    <string name="bioscan_paywall_connecting_message">Producten worden nog geladen. Wacht even en probeer het opnieuw.</string>
+    <string name="bioscan_paywall_pending_title">Aankoop in behandeling</string>
+    <string name="bioscan_paywall_pending_message">Je betaling wordt verwerkt. De scans worden toegevoegd zodra dit is voltooid.</string>
+    <string name="bioscan_paywall_purchase_failed_title">Aankoop mislukt</string>
+    <string name="bioscan_paywall_restore_failed_title">Herstellen mislukt</string>
+    <string name="bioscan_paywall_restore_nothing_message">Geen eerdere Lifetime-aankoop gevonden.</string>
+</resources>

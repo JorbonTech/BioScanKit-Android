@@ -29,6 +29,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Eco
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -41,15 +44,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -66,10 +74,154 @@ fun RecognitionProcessingScreen(
     animationsEnabled: Boolean = true,
     fallback: @Composable BoxScope.() -> Unit = {},
 ) {
+    // 与 iOS `ProcessingScreenLayoutStyle` 对齐：两套完全不同的视觉。
+    if (configuration.layoutStyle == ProcessingScreenLayoutStyle.Adaptive) {
+        AdaptiveProcessingScreen(
+            preview = preview,
+            modifier = modifier,
+            configuration = configuration,
+            animationsEnabled = animationsEnabled,
+            fallback = fallback,
+        )
+        return
+    }
+    LegacyProcessingScreen(
+        preview = preview,
+        modifier = modifier,
+        configuration = configuration,
+        animationsEnabled = animationsEnabled,
+        fallback = fallback,
+    )
+}
+
+/**
+ * 对应 iOS `AdaptiveProcessingView`：模糊照片铺底 + 主题色圆环 + 标题/副标题。
+ */
+@Composable
+private fun AdaptiveProcessingScreen(
+    preview: ImageBitmap?,
+    modifier: Modifier,
+    configuration: ProcessingScreenConfiguration,
+    animationsEnabled: Boolean,
+    fallback: @Composable BoxScope.() -> Unit,
+) {
+    val colors = configuration.theme.resolve(androidx.compose.foundation.isSystemInDarkTheme())
+    val resolvedTitle = configuration.title ?: stringResource(R.string.bioscan_capture_processing_title)
+    val resolvedSubtitle = configuration.subtitle
+        ?: stringResource(R.string.bioscan_capture_processing_subtitle)
+    val rotation = if (animationsEnabled) {
+        val transition = rememberInfiniteTransition(label = "adaptive-processing-ring")
+        transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1200, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
+            label = "adaptive-processing-ring-angle",
+        ).value
+    } else {
+        0f
+    }
+
+    Box(
+        modifier = modifier.fillMaxSize().background(Color.Black),
+    ) {
+        if (preview != null) {
+            Image(
+                bitmap = preview,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize().graphicsLayer {
+                    alpha = 0.46f
+                    // Compose 无内置 blur，用 alpha + 深色蒙层近似 iOS 的 .blur(radius: 14)
+                },
+                contentScale = ContentScale.Crop,
+            )
+        } else {
+            fallback()
+        }
+        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.54f)))
+
+        Column(
+            modifier = Modifier.fillMaxSize().padding(28.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Spacer(Modifier.weight(1f))
+            Box(contentAlignment = Alignment.Center) {
+                Canvas(Modifier.size(92.dp)) {
+                    drawCircle(
+                        color = Color.White.copy(alpha = 0.18f),
+                        style = Stroke(width = 4.dp.toPx()),
+                    )
+                }
+                Canvas(Modifier.size(92.dp).rotate(rotation)) {
+                    drawArc(
+                        color = colors.accent,
+                        startAngle = 0f,
+                        sweepAngle = 259f, // 0.72 * 360
+                        useCenter = false,
+                        style = Stroke(width = 5.dp.toPx(), cap = StrokeCap.Round),
+                    )
+                }
+                Icon(
+                    imageVector = androidx.compose.material.icons.Icons.Filled.Eco,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp),
+                )
+            }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = resolvedTitle,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Black,
+                    ),
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = resolvedSubtitle,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                    color = Color.White.copy(alpha = 0.78f),
+                    textAlign = TextAlign.Center,
+                )
+            }
+            Spacer(Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun LegacyProcessingScreen(
+    preview: ImageBitmap?,
+    modifier: Modifier,
+    configuration: ProcessingScreenConfiguration,
+    animationsEnabled: Boolean,
+    fallback: @Composable BoxScope.() -> Unit,
+) {
     val isDark = androidx.compose.foundation.isSystemInDarkTheme()
     val colors = configuration.theme.resolve(isDark)
+    // 未指定时使用组件内置的 5 条状态文案，避免宿主重复维护本地化字符串。
+    val statuses = configuration.statuses ?: listOf(
+        stringResource(R.string.bioscan_capture_processing_preparing),
+        stringResource(R.string.bioscan_capture_processing_detecting),
+        stringResource(R.string.bioscan_capture_processing_extracting),
+        stringResource(R.string.bioscan_capture_processing_comparing),
+        stringResource(R.string.bioscan_capture_processing_waiting),
+    )
+    val resolvedEyebrow = configuration.eyebrow ?: stringResource(R.string.bioscan_capture_processing_eyebrow)
+    val resolvedWaitingText = configuration.waitingText
+        ?: stringResource(R.string.bioscan_capture_processing_finishing)
     var statusIndex by remember(configuration, animationsEnabled) {
-        mutableIntStateOf(if (animationsEnabled) 0 else configuration.statuses.lastIndex)
+        mutableIntStateOf(if (animationsEnabled) 0 else statuses.lastIndex)
     }
     var progressTarget by remember(configuration, animationsEnabled) {
         mutableFloatStateOf(if (animationsEnabled) 0.08f else configuration.progressTargets.last())
@@ -157,7 +309,7 @@ fun RecognitionProcessingScreen(
             Spacer(Modifier.heightIn(min = 24.dp).weight(1.15f))
             Column(Modifier.width(contentWidth), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 Text(
-                    configuration.eyebrow,
+                    resolvedEyebrow,
                     style = MaterialTheme.typography.labelLarge.copy(
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Black,
@@ -166,7 +318,7 @@ fun RecognitionProcessingScreen(
                     color = accent,
                 )
                 Text(
-                    configuration.statuses[statusIndex],
+                    statuses[statusIndex],
                     style = MaterialTheme.typography.titleLarge.copy(fontSize = 26.sp, fontWeight = FontWeight.Black),
                     color = colors.primaryText,
                     maxLines = 1,
@@ -188,7 +340,7 @@ fun RecognitionProcessingScreen(
                     if (preview != null) {
                         Image(
                             bitmap = preview,
-                            contentDescription = "Photo being analyzed",
+                            contentDescription = stringResource(R.string.bioscan_capture_photo_being_analyzed),
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop,
                         )
@@ -221,7 +373,7 @@ fun RecognitionProcessingScreen(
                     }
                 }
                 ProcessingCornerMarkers(accent.copy(alpha = 0.82f), Modifier.align(Alignment.Center).size(markerSize))
-                if (statusIndex == configuration.statuses.lastIndex) {
+                if (statusIndex == statuses.lastIndex) {
                     Row(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
@@ -238,7 +390,7 @@ fun RecognitionProcessingScreen(
                                 .background(accent.copy(alpha = 0.90f), CircleShape),
                         )
                         Text(
-                            configuration.waitingText,
+                            resolvedWaitingText,
                             style = MaterialTheme.typography.labelLarge.copy(fontSize = 11.sp, fontWeight = FontWeight.Black),
                             color = colors.primaryText.copy(alpha = 0.82f),
                         )

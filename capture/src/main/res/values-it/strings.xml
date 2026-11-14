@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bioscan_capture_title">Identifica</string>
+    <string name="bioscan_capture_instruction">Allinea chiaramente il soggetto nell\'inquadratura</string>
+    <string name="bioscan_capture_align_clearly">Allinea chiaramente il soggetto</string>
+    <string name="bioscan_capture_keep_subject_clear">Mantieni il soggetto nitido e centrato.</string>
+    <string name="bioscan_capture_analyzing_field">Analisi delle specie sul campo…</string>
+    <string name="bioscan_capture_permission_title">Accesso alla fotocamera</string>
+    <string name="bioscan_capture_permission_message">Consenti l\'accesso alla fotocamera per fotografare e identificare il soggetto.</string>
+    <string name="bioscan_capture_permission_denied">L\'accesso alla fotocamera è disattivato. Abilitalo in Impostazioni.</string>
+    <string name="bioscan_capture_permission_denied_enable">L\'accesso alla fotocamera è disattivato. Abilitalo in Impostazioni.</string>
+    <string name="bioscan_capture_status_on_device">Riconoscimento sul dispositivo</string>
+    <string name="bioscan_capture_processing_title">Analisi in corso</string>
+    <string name="bioscan_capture_processing_subtitle">Confronto delle caratteristiche visive su questo dispositivo…</string>
+    <string name="bioscan_capture_processing_instruction">Analisi delle specie sul campo…</string>
+    <string name="bioscan_capture_processing_eyebrow">SCANSIONE IA</string>
+    <string name="bioscan_capture_processing_preparing">Preparazione scansione…</string>
+    <string name="bioscan_capture_processing_detecting">Rilevamento…</string>
+    <string name="bioscan_capture_processing_extracting">Estrazione caratteristiche…</string>
+    <string name="bioscan_capture_processing_comparing">Confronto specie…</string>
+    <string name="bioscan_capture_processing_waiting">In attesa del risultato…</string>
+    <string name="bioscan_capture_processing_finishing">Elaborazione</string>
+    <string name="bioscan_capture_recognition_failed">Riconoscimento non riuscito</string>
+    <string name="bioscan_capture_try_again">Riprova</string>
+    <string name="bioscan_capture_back_to_camera">Torna alla fotocamera</string>
+    <string name="bioscan_capture_cancel">Annulla</string>
+    <string name="bioscan_capture_continue">Continua</string>
+    <string name="bioscan_capture_ok">OK</string>
+    <string name="bioscan_capture_open_settings">Apri Impostazioni</string>
+    <string name="bioscan_capture_camera_error">Errore fotocamera</string>
+    <string name="bioscan_capture_camera_unavailable">La fotocamera posteriore non è disponibile.</string>
+    <string name="bioscan_capture_camera_config_failed">Impossibile configurare la fotocamera.</string>
+    <string name="bioscan_capture_photo_process_failed">Impossibile elaborare la foto acquisita.</string>
+    <string name="bioscan_capture_close_camera">Chiudi fotocamera</string>
+    <string name="bioscan_capture_close_crop_editor">Chiudi editor ritaglio</string>
+    <string name="bioscan_capture_show_camera_tips">Mostra suggerimenti fotocamera</string>
+    <string name="bioscan_capture_choose_photo">Scegli una foto</string>
+    <string name="bioscan_capture_choose_from_photos">Scegli da Foto</string>
+    <string name="bioscan_capture_take_photo">Scatta foto</string>
+    <string name="bioscan_capture_flash_off">Disattiva flash</string>
+    <string name="bioscan_capture_flash_on">Attiva flash</string>
+    <string name="bioscan_capture_crop_reset">Reimposta</string>
+    <string name="bioscan_capture_crop_use">Usa ritaglio</string>
+    <string name="bioscan_capture_crop_preview">Anteprima ritaglio</string>
+    <string name="bioscan_capture_zoom_times">Zoom %1$s×</string>
+    <string name="bioscan_capture_photo_being_analyzed">Photo being analyzed</string>
+</resources>

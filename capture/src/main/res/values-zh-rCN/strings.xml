@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bioscan_capture_title">识别</string>
+    <string name="bioscan_capture_instruction">将主体清晰对准取景框</string>
+    <string name="bioscan_capture_align_clearly">清晰对准主体</string>
+    <string name="bioscan_capture_keep_subject_clear">保持主体清晰并居中。</string>
+    <string name="bioscan_capture_analyzing_field">正在分析野外物种...</string>
+    <string name="bioscan_capture_permission_title">相机权限</string>
+    <string name="bioscan_capture_permission_message">允许访问相机，以拍摄并识别主体。</string>
+    <string name="bioscan_capture_permission_denied">相机权限已关闭。请在“设置”中开启。</string>
+    <string name="bioscan_capture_permission_denied_enable">相机权限已关闭。请在“设置”中开启。</string>
+    <string name="bioscan_capture_status_on_device">设备端识别</string>
+    <string name="bioscan_capture_processing_title">正在分析</string>
+    <string name="bioscan_capture_processing_subtitle">正在此设备上比对视觉特征…</string>
+    <string name="bioscan_capture_processing_instruction">正在分析野外物种...</string>
+    <string name="bioscan_capture_processing_eyebrow">AI 识别</string>
+    <string name="bioscan_capture_processing_preparing">正在准备扫描...</string>
+    <string name="bioscan_capture_processing_detecting">正在检测...</string>
+    <string name="bioscan_capture_processing_extracting">正在提取特征...</string>
+    <string name="bioscan_capture_processing_comparing">正在比对物种...</string>
+    <string name="bioscan_capture_processing_waiting">正在等待结果...</string>
+    <string name="bioscan_capture_processing_finishing">正在处理</string>
+    <string name="bioscan_capture_recognition_failed">识别失败</string>
+    <string name="bioscan_capture_try_again">重试</string>
+    <string name="bioscan_capture_back_to_camera">返回相机</string>
+    <string name="bioscan_capture_cancel">取消</string>
+    <string name="bioscan_capture_continue">继续</string>
+    <string name="bioscan_capture_ok">确定</string>
+    <string name="bioscan_capture_open_settings">打开设置</string>
+    <string name="bioscan_capture_camera_error">相机错误</string>
+    <string name="bioscan_capture_camera_unavailable">后置相机不可用。</string>
+    <string name="bioscan_capture_camera_config_failed">无法配置相机。</string>
+    <string name="bioscan_capture_photo_process_failed">无法处理拍摄的照片。</string>
+    <string name="bioscan_capture_close_camera">关闭相机</string>
+    <string name="bioscan_capture_close_crop_editor">关闭裁剪编辑器</string>
+    <string name="bioscan_capture_show_camera_tips">显示相机提示</string>
+    <string name="bioscan_capture_choose_photo">选择照片</string>
+    <string name="bioscan_capture_choose_from_photos">从照片中选择</string>
+    <string name="bioscan_capture_take_photo">拍照</string>
+    <string name="bioscan_capture_flash_off">关闭闪光灯</string>
+    <string name="bioscan_capture_flash_on">打开闪光灯</string>
+    <string name="bioscan_capture_crop_reset">重置</string>
+    <string name="bioscan_capture_crop_use">使用裁剪</string>
+    <string name="bioscan_capture_crop_preview">裁剪预览</string>
+    <string name="bioscan_capture_zoom_times">缩放 %1$s 倍</string>
+    <string name="bioscan_capture_photo_being_analyzed">Photo being analyzed</string>
+</resources>

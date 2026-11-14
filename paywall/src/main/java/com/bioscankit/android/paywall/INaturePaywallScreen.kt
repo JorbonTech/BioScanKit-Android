@@ -59,6 +59,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -69,13 +70,17 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bioscankit.android.design.BioScanDialog
 import com.bioscankit.android.design.BioScanDesign
 
 /** Store-owned price data consumed by the shared iNature-style paywall. */
@@ -112,10 +117,21 @@ data class INaturePaywallCopy(
     val popularUnavailableTitle: String,
     val lifetimeActivatedTitle: String,
     val productsUnavailableTitle: String,
-    val restoreTitle: String = "RESTORE",
-    val connectingMessage: String = "Connecting to Google Play...",
-    val retryTitle: String = "Retry",
-    val dialogConfirmTitle: String = "OK",
+    /** 以下文案传 null 时使用组件内置的多语言资源。 */
+    val restoreTitle: String? = null,
+    val connectingMessage: String? = null,
+    val retryTitle: String? = null,
+    val dialogConfirmTitle: String? = null,
+    /**
+     * 额度区小标题。iOS 默认值为 "PAY ONLY FOR WHAT YOU USE"，但会走
+     * `BioScanPaywallL10n` 本地化；这里同样允许宿主注入译文。
+     */
+    val creditSectionEyebrow: String = creditSectionTitle,
+    /** 热门额度包角标（iOS "SAVE 25%"）。 */
+    val popularSavingsBadge: String = popularBadge,
+    /** 额度卡档位标题（iOS "POPULAR" / "STARTER"）。 */
+    val popularTierTitle: String = popularTitle,
+    val starterTierTitle: String = starterTitle,
 )
 
 /**
@@ -144,6 +160,20 @@ fun INaturePaywallScreen(
     onProductSelected: (String) -> Unit = {},
     onPurchase: (String) -> Unit,
     modifier: Modifier = Modifier,
+    /** 埋点回调，对齐 iOS `PaywallActions.track`；不传则不上报。 */
+    track: (PaywallEvent) -> Unit = {},
+    /**
+     * 顶部品牌插画插槽。
+     *
+     * 注意：iOS 的 legacy iNature 布局（iNature / NatureEar 实际使用）**不渲染 hero**，
+     * 只显示文字卡；该参数预留给 standard 布局，当前实现忽略它。
+     */
+    hero: (@Composable () -> Unit)? = null,
+    /**
+     * 宿主自定义整套配色；为 null 时用 iNature 固定绿色配色（历史行为）。
+     * NatureEar 用它对齐 iOS 的「奶油底 + 锈红」付费页。
+     */
+    palette: INaturePaywallColors? = null,
 ) {
     val products = listOfNotNull(lifetimeProduct, starterProduct, popularProduct)
     var selectedProductId by rememberSaveable { mutableStateOf(defaultProductId) }
@@ -156,7 +186,7 @@ fun INaturePaywallScreen(
         onProductSelected(selectedProductId)
     }
 
-    val colors = rememberINaturePaywallColors()
+    val colors = palette ?: rememberINaturePaywallColors()
     val configuration = LocalConfiguration.current
     val horizontalPadding = if (configuration.screenWidthDp >= 900) 24.dp else 16.dp
     val contentModifier = Modifier.widthIn(max = 760.dp).fillMaxWidth()
@@ -164,47 +194,64 @@ fun INaturePaywallScreen(
     val topInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val selectedProduct = products.firstOrNull { it.id == selectedProductId }
     val busy = isLoading || isPurchasing
+    LaunchedEffect(Unit) { track(PaywallEvent.Shown(PaywallStyle.INature)) }
+    // 底部 CTA 固定悬浮，滚动内容需要按其实测高度留白，否则最后两张额度卡会被遮住。
+    var bottomBarHeight by remember { mutableStateOf(0.dp) }
+    val density = LocalDensity.current
+    val scrollState = rememberScrollState()
+    // 真机回归用：setprop debug.inature.scroll end 自动滚到底部，检查末尾内容是否被 CTA 遮挡。
+    val debugScrollToEnd = remember {
+        runCatching {
+            Class.forName("android.os.SystemProperties")
+                .getMethod("get", String::class.java)
+                .invoke(null, "debug.inature.scroll") as? String
+        }.getOrNull() == "end"
+    }
+    LaunchedEffect(debugScrollToEnd) {
+        if (debugScrollToEnd) {
+            kotlinx.coroutines.delay(500)
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
 
     Box(modifier.fillMaxSize().background(colors.pageBackground)) {
         if (!messageBody.isNullOrBlank()) {
-            AlertDialog(
+            BioScanDialog(
                 onDismissRequest = onDismissMessage,
-                confirmButton = {
-                    TextButton(onClick = onDismissMessage) {
-                        Text(copy.dialogConfirmTitle, color = colors.green, fontWeight = FontWeight.Bold)
-                    }
-                },
-                title = {
-                    Text(
-                        text = messageTitle ?: "Notice",
-                        color = colors.primaryText,
-                        fontWeight = FontWeight.Black,
-                    )
-                },
-                text = { Text(messageBody, color = colors.primaryText, lineHeight = 20.sp) },
-                containerColor = colors.cardBackground,
-                tonalElevation = 0.dp,
+                title = messageTitle ?: stringResource(R.string.bioscan_paywall_notice),
+                message = messageBody,
+                confirmLabel = copy.dialogConfirmTitle ?: stringResource(R.string.bioscan_paywall_ok),
+                onConfirm = onDismissMessage,
             )
         }
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .statusBarsPadding()
                 .padding(horizontal = horizontalPadding)
-                .padding(top = 18.dp, bottom = 96.dp + bottomInset),
+                .padding(top = 18.dp, bottom = maxOf(bottomBarHeight, INatureBottomBarClearance) + bottomInset + 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Column(contentModifier, verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 PaywallTopBar(
-                    restoreTitle = copy.restoreTitle,
+                    restoreTitle = copy.restoreTitle ?: stringResource(R.string.bioscan_paywall_restore),
                     isBusy = busy,
                     onDismiss = onDismiss,
-                    onRestore = onRestore,
-                    closeIcon = {
-                        Icon(Icons.Rounded.Close, "Close", tint = colors.secondaryText)
+                    onRestore = {
+                        track(PaywallEvent.RestoreStarted)
+                        onRestore()
                     },
+                    closeIcon = {
+                        Icon(
+                            Icons.Rounded.Close,
+                            stringResource(R.string.bioscan_paywall_close),
+                            tint = colors.secondaryText,
+                        )
+                    },
+                    // iOS legacy 使用 legacyAccent（深绿），不用主题强调色。
+                    restoreTint = colors.greenDeep,
                 )
 
                 if (isLoading || !storeMessage.isNullOrBlank()) {
@@ -225,7 +272,7 @@ fun INaturePaywallScreen(
                     )
                 }
 
-                PaywallHero(copy = copy.hero)
+                PaywallHero(copy = copy.hero, footnoteColor = colors.heroFootnote)
 
                 INatureLifetimeCard(
                     product = lifetimeProduct,
@@ -236,6 +283,7 @@ fun INaturePaywallScreen(
                     onSelect = {
                         lifetimeProduct?.let {
                             selectedProductId = it.id
+                            track(PaywallEvent.ProductSelected(it.id))
                             onProductSelected(it.id)
                         }
                     },
@@ -250,6 +298,7 @@ fun INaturePaywallScreen(
                     enabled = !isLifetimeMember && !busy,
                     onSelect = {
                         selectedProductId = it
+                        track(PaywallEvent.ProductSelected(it))
                         onProductSelected(it)
                     },
                 )
@@ -261,6 +310,7 @@ fun INaturePaywallScreen(
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .background(colors.pageBackground)
+                .onSizeChanged { bottomBarHeight = with(density) { it.height.toDp() } }
                 .padding(horizontal = horizontalPadding, vertical = 8.dp)
                 .padding(bottom = bottomInset),
             contentAlignment = Alignment.Center,
@@ -275,7 +325,12 @@ fun INaturePaywallScreen(
                 isLifetimeMember = isLifetimeMember,
                 isBusy = busy,
                 colors = colors,
-                onClick = { selectedProduct?.let { onPurchase(it.id) } },
+                onClick = {
+                    selectedProduct?.let {
+                        track(PaywallEvent.PurchaseStarted(it.id))
+                        onPurchase(it.id)
+                    }
+                },
             )
         }
 
@@ -285,6 +340,10 @@ fun INaturePaywallScreen(
         )
     }
 }
+
+/** mascot 卡片底色，对齐 iOS `Color.paywallMascotCard`。 */
+/** 底部固定 CTA 区域高度，滚动内容必须留出这段空间。 */
+private val INatureBottomBarClearance = 200.dp
 
 @Composable
 private fun INatureLifetimeCard(
@@ -310,16 +369,34 @@ private fun INatureLifetimeCard(
                         Text(copy.lifetimeSubtitle, color = colors.green, fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.Bold)
                     }
                     Spacer(Modifier.width(16.dp))
+                    // 与 iOS 一致使用 164dp；价格字号随容器自动缩小，避免长价格被裁掉。
                     Column(
-                        Modifier.padding(top = 16.dp).width(148.dp).clip(RoundedCornerShape(16.dp))
+                        Modifier.padding(top = 16.dp).widthIn(min = 148.dp, max = 164.dp)
+                            .clip(RoundedCornerShape(16.dp))
                             .background(colors.softGreenBackground)
                             .border(1.dp, colors.green.copy(alpha = 0.28f), RoundedCornerShape(16.dp))
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                            .padding(horizontal = 12.dp, vertical = 14.dp),
                         horizontalAlignment = Alignment.End,
                         verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
-                        Text(product?.referencePriceText.orEmpty(), color = colors.secondaryText, fontSize = 13.sp, fontWeight = FontWeight.Bold, textDecoration = TextDecoration.LineThrough, maxLines = 1, softWrap = false)
-                        Text(product?.priceText ?: "Unavailable", color = colors.green, fontSize = 26.sp, lineHeight = 30.sp, fontWeight = FontWeight.Black, maxLines = 1, softWrap = false)
+                        Text(
+                            product?.referencePriceText.orEmpty(),
+                            color = colors.secondaryText,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            textDecoration = TextDecoration.LineThrough,
+                            maxLines = 1,
+                        )
+                        Text(
+                            product?.priceText ?: stringResource(R.string.bioscan_paywall_unavailable),
+                            color = colors.green,
+                            fontSize = 26.sp,
+                            lineHeight = 30.sp,
+                            fontWeight = FontWeight.Black,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Clip,
+                        )
                     }
                 }
 
@@ -374,8 +451,9 @@ private val NatureEarBenefitIcons: List<ImageVector> = listOf(
 @Composable
 private fun INatureBenefitLine(icon: ImageVector, text: String, colors: INaturePaywallColors) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Box(Modifier.size(34.dp).clip(CircleShape).background(colors.softGreenBackground), contentAlignment = Alignment.Center) {
-            Icon(icon, contentDescription = null, tint = colors.green, modifier = Modifier.size(17.dp))
+        // 对齐 iOS：图标圈用专属浅绿底 + 深色图标，与卡片背景区分更明显。
+        Box(Modifier.size(34.dp).clip(CircleShape).background(colors.benefitIconBackground), contentAlignment = Alignment.Center) {
+            Icon(icon, contentDescription = null, tint = colors.benefitIconTint, modifier = Modifier.size(14.dp))
         }
         Text(text, color = colors.primaryText, fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.Bold)
     }
@@ -392,8 +470,9 @@ private fun INatureCreditSection(
     onSelect: (String) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // iOS legacy 使用固定文案，不取自 App 文案。
         Text(
-            copy.creditSectionTitle,
+            copy.creditSectionEyebrow,
             color = colors.secondaryText,
             fontSize = 13.sp,
             fontWeight = FontWeight.Black,
@@ -402,15 +481,16 @@ private fun INatureCreditSection(
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
         )
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            // 对齐 iOS：档位标题固定为 STARTER / POPULAR，只有热门档带 SAVE 25% 角标。
             INatureCreditCard(
-                Modifier.weight(1f).fillMaxHeight(), starterProduct, copy.starterTitle,
+                Modifier.weight(1f).fillMaxHeight(), starterProduct, copy.starterTierTitle,
                 copy.starterUnits, null, selectedProductId == starterProduct?.id,
                 enabled && starterProduct.isPurchasable(), colors,
                 onClick = { starterProduct?.let { onSelect(it.id) } },
             )
             INatureCreditCard(
-                Modifier.weight(1f).fillMaxHeight(), popularProduct, copy.popularTitle,
-                copy.popularUnits, copy.popularBadge, selectedProductId == popularProduct?.id,
+                Modifier.weight(1f).fillMaxHeight(), popularProduct, copy.popularTierTitle,
+                copy.popularUnits, copy.popularSavingsBadge, selectedProductId == popularProduct?.id,
                 enabled && popularProduct.isPurchasable(), colors,
                 onClick = { popularProduct?.let { onSelect(it.id) } },
             )
@@ -439,13 +519,24 @@ private fun INatureCreditCard(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
     ) {
-        badge?.let {
-            Text(it, color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Black,
-                modifier = Modifier.offset(y = (-6).dp).clip(CircleShape).background(colors.badgeBlue).padding(horizontal = 10.dp, vertical = 4.dp))
+        // iOS：只有热门的 20 次包显示 SAVE 25% 胶囊，其余不显示角标。
+        badge?.takeIf { it.isNotBlank() }?.let {
+            Text(
+                it,
+                color = Color.White,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Black,
+                // 负 padding 在 Compose 里非法，改用 offset 实现角标上浮重叠。
+                modifier = Modifier
+                    .offset(y = (-10).dp)
+                    .clip(CircleShape)
+                    .background(colors.badgeBlue)
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
+            )
         }
         Text(title, color = colors.secondaryText, fontSize = 15.sp, fontWeight = FontWeight.Black)
         Text(units, color = colors.primaryText, fontSize = 20.sp, lineHeight = 24.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
-        Text(product?.priceText ?: "Unavailable", color = colors.green, fontSize = 24.sp, lineHeight = 28.sp, fontWeight = FontWeight.Black)
+        Text(product?.priceText ?: stringResource(R.string.bioscan_paywall_unavailable), color = colors.green, fontSize = 24.sp, lineHeight = 28.sp, fontWeight = FontWeight.Black)
         Text(product?.perUnitText.orEmpty(), color = colors.secondaryText, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
     }
 }
@@ -498,26 +589,32 @@ private fun rememberINaturePaywallColors(): INaturePaywallColors {
     val shared = BioScanDesign.colors
     val dark = BioScanDesign.isDark
     return remember(shared, dark) {
+        // 对齐 iOS `LegacyINaturePaywallView`：该风格使用一套固定配色，
+        // 不继承 App 主题（否则 MrRock 的 teal、NatureEar 的品牌色都会渗进来）。
         INaturePaywallColors(
-            pageBackground = shared.pageBackground,
-            primaryText = shared.primaryText,
-            secondaryText = shared.secondaryText,
-            tertiaryText = shared.secondaryText.copy(alpha = 0.86f),
-            cardBackground = shared.cardBackground,
-            cardBorder = shared.border,
-            softGreenBackground = shared.elevatedCardBackground,
-            softGreenBorder = shared.border,
-            green = shared.accent,
-            greenDeep = lerp(shared.accent, Color.Black, if (dark) 0.12f else 0.18f),
-            disabledGreen = shared.accent.copy(alpha = 0.72f),
-            badgeBlue = shared.accent,
-            warning = shared.warning,
+            pageBackground = if (dark) Color(0xFF14191F) else Color(0xFFF2F5F2),
+            primaryText = if (dark) Color(0xFFEDF2FA) else Color(0xFF141F33),
+            secondaryText = if (dark) Color(0xFF9EAEBF) else Color(0xFF949FBA),
+            tertiaryText = if (dark) Color(0xFF9EAEBF).copy(alpha = 0.86f) else Color(0xFF858FA8),
+            cardBackground = if (dark) Color(0xFF21262E) else Color.White,
+            cardBorder = if (dark) Color.White.copy(alpha = 0.14f) else Color(0xFFD6E0E8),
+            softGreenBackground = if (dark) Color(0xFF1E2A20) else Color(0xFFEAF2EA),
+            softGreenBorder = if (dark) Color(0xFF4F7A54) else Color(0xFFA9D1A9),
+            green = if (dark) Color(0xFF3FAE5A) else Color(0xFF2F8A47),
+            greenDeep = if (dark) Color(0xFF1A6B33) else Color(0xFF1A6629),
+            disabledGreen = if (dark) Color(0xFF3FAE5A).copy(alpha = 0.72f) else Color(0xFF2F8A47).copy(alpha = 0.72f),
+            badgeBlue = if (dark) Color(0xFF3FAE5A) else Color(0xFF2F8A47),
+            warning = if (dark) Color(0xFFE6693A) else Color(0xFFE6792A),
+            // iOS legacy：图标圈 0.21/0.29/0.22（暗）· 0.86/0.92/0.86（亮）
+            benefitIconBackground = if (dark) Color(0xFF364A38) else Color(0xFFDBEBDB),
+            // iOS legacy：图标 0.08/0.14/0.26（暗）· 同上深绿（亮）
+            benefitIconTint = if (dark) Color(0xFF141F33) else Color(0xFF1A6629),
         )
     }
 }
 
 @Immutable
-private data class INaturePaywallColors(
+data class INaturePaywallColors(
     val pageBackground: Color,
     val primaryText: Color,
     val secondaryText: Color,
@@ -531,6 +628,10 @@ private data class INaturePaywallColors(
     val disabledGreen: Color,
     val badgeBlue: Color,
     val warning: Color,
+    val benefitIconBackground: Color,
+    val benefitIconTint: Color,
+    /** 顶部卡片第三行文案颜色；为 null 时用主题 success 色。 */
+    val heroFootnote: Color? = null,
 )
 
 private fun Modifier.inatureShimmer(shape: RoundedCornerShape): Modifier = composed {
